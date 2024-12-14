@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Clip-path para efecto de onda */
+.clip-closed {
+  clip-path: circle(0% at 0% 0%);
+}
+
+.clip-open {
+  clip-path: circle(150% at 0% 50%);
+}
+
+.fixed {
+  transition: clip-path 0.5s ease-in-out;
+}
