@@ -14,7 +14,7 @@ export default function NavbarItem({ icon, text, to, active, alert }) {
         ${
           active
             ? "bg-gradient-to-tr from-indigo-200 to-blue-200 text-indigo-800"
-            : "hover:bg-yellow-100 text-gray-600"
+            : "hover:bg-blue2 text-gray-600"
         }
       `}
     >

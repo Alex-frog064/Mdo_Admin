@@ -24,7 +24,7 @@ export default function Navbar({ children }) {
           />
           <button
             onClick={() => setExpanded((curr) => !curr)}
-            className="p-1.5 rounded-lg bg-yellow-50 hover:bg-yellow-100"
+            className="p-1.5 rounded-lg bg-blue2 hover:bg-blue1"
           >
             {expanded ? <ChevronLeft /> : <ChevronRight />}
           </button>
@@ -48,9 +48,9 @@ export default function Navbar({ children }) {
             }`} // Ajustamos el espacio inferior según el estado expandido
           >
             <div className="leading-4">
-              <h4 className="font-semibold text-sm">Mascotico CORP</h4>
-              <span className="text-xs text-yellow-600">
-                Mascotico@official.com
+              <h4 className="font-semibold text-sm">MascoTico CORP</h4>
+              <span className="text-xs text-blue1">
+              mascotico.1225@gmail.com
               </span>
             </div>
             <MoreVertical size={20} />
