@@ -6,8 +6,8 @@ import App from './App.jsx';
 import Dates from './Components/Dates/Dates.jsx';
 import User from './Profile/Signin.jsx'
 import Register from './Profile/Signon.jsx';
+import Profile from './Profile/Profile.jsx';
 
-// Configuración de las rutas
 const router = createBrowserRouter([
   {
     path: "/",
@@ -15,7 +15,8 @@ const router = createBrowserRouter([
     children: [
       { path: "/dates", element: <Dates/>},
       { path:"/SignIn", element: <User/>},
-      {path:"/SignOn", element:<Register/>}
+      {path:"/SignOn", element:<Register/>},
+      {path:"/profile", element: <Profile/>}
      
     ],
   },
