@@ -74,28 +74,41 @@ export default function TablaCitas() {
   };
 
   const handleEstadoChange = async (id, nuevoEstado) => {
+    const estadosValidos = {
+      Pendiente: "pendiente",
+      Aceptada: "confirmada",
+      Rechazada: "rechazada",
+    };
+  
+    const estadoFinal = estadosValidos[nuevoEstado] || "pendiente"; // Valor por defecto
+  
     try {
+      console.log("Enviando estado:", estadoFinal);
+  
       const response = await fetch(`https://api-mascoticobereal.onrender.com/citas/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("jwt")}`,
         },
-        body: JSON.stringify({ estado: nuevoEstado }),
+        body: JSON.stringify({ estado: estadoFinal }),
       });
   
+      const data = await response.json();
+      console.log(" Respuesta del servidor:", data);
+  
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        throw new Error(`Error ${response.status}: ${data.error || response.statusText}`);
       }
   
-      
+      setCitas((prevCitas) =>
+        prevCitas.map((cita) => (cita.id === id ? { ...cita, estado: nuevoEstado } : cita))
+      );
     } catch (error) {
-      window.location.reload(); // che adrian quita el error
-      
+      console.error("Error al actualizar el estado de la cita:", error);
+      alert(" se actualizo el estado de la cita.");
     }
   };
-  
-  
   
   
   
@@ -116,7 +129,16 @@ export default function TablaCitas() {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Citas</h2>
       </div>
-      
+      <div className="flex items-center gap-2 mb-3 border rounded-lg p-2">
+        <FaSearch className="text-gray-400" />
+        <input
+          type="text"
+          placeholder="Buscar..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="p-1 w-full outline-none text-gray-700 bg-transparent"
+        />
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-gray-700 border-collapse">
           <thead className="text-left bg-gray-100 text-gray-600 text-sm">
@@ -143,17 +165,18 @@ export default function TablaCitas() {
                   <td className="p-3">{cita.mascota}</td>
                   <td className="p-3">
                   <select
-  value={cita.estado} 
-  onChange={(e) => handleEstadoChange(cita.id, e.target.value)}
-  className={`px-2 py-1 rounded text-white cursor-pointer outline-none 
-    ${cita.estado === "pendiente" ? "bg-yellow-500" : 
-      cita.estado === "confirmada" ? "bg-green-500" : "bg-red-500"}`}
->
-  <option value="pendiente" className="text-black">Pendiente</option>
-  <option value="confirmada" className="text-black">Aceptada</option>
-  <option value="rechazada" className="text-black">Rechazada</option>
-</select>
-
+                  value={cita.estado} 
+                  onChange={(e) => handleEstadoChange(cita.id, e.target.value)}
+                  className={`px-2 py-1 rounded text-white cursor-pointer outline-none"} 
+                    ${cita.estado === "pendiente" ? "bg-yellow-500" : 
+                      cita.estado === "confirmada" ? "bg-green-500" : 
+                      cita.estado === "rechazada" ? "bg-red-500" : "bg-red-500"
+                    }`}
+                >
+                  <option value="pendiente" className="text-black">Pendiente</option>
+                  <option value="confirmada" className="text-black">Aceptada</option>
+                  <option value="rechazada" className="text-black">Rechazada</option>
+                </select>
 
                   </td>
                   <td className="p-3 flex justify-center gap-3">
