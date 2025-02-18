@@ -24,7 +24,7 @@ export default function App() {
       <Navbar isExpanded={isNavbarExpanded} setIsExpanded={setIsNavbarExpanded}>
         <NavbarItem icon={<LayoutDashboard size={20} />} text="Blogs" to="/" />
         <NavbarItem icon={<BarChart3 size={20} />} text="Statistics" to="/statistics" />
-        <NavbarItem icon={<UserCircle size={20} />} text="User" to="/profile" />
+        <NavbarItem icon={<UserCircle size={20} />} text="User" to="/SignIn" />
 
         <NavbarItem icon={<Boxes size={20} />} text="Inventory" to="/inventory" />
         <NavbarItem icon={<Package size={20} />} text="Orders" to="/orders" />

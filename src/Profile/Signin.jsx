@@ -15,12 +15,14 @@ export default function SignIn() {
         try {
             const response = await axiosInstance.post('/veterinario/login', { email, contraseña });
 
+            console.log("Respuesta de la API:", response.data);
+
             // Extraer el token y los datos del usuario de la respuesta
-            const { token, usuario } = response.data; 
+            const { JWT, ...usuarioData } = response.data; 
 
             // Guardar en localStorage
-            localStorage.setItem('jwt', token);
-            localStorage.setItem('usuario', JSON.stringify(usuario)); 
+            localStorage.setItem('jwt', JWT);  // Guardamos solo el JWT
+            localStorage.setItem('usuario', JSON.stringify(usuarioData)); // Guardamos el resto de los datos
 
             // Redirigir al perfil
             navigate('/profile');

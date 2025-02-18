@@ -5,7 +5,6 @@ const axiosInstance = axios.create({
   withCredentials: true, 
 });
 
-
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('jwt'); 
@@ -18,16 +17,6 @@ axiosInstance.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-axiosInstance.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('jwt'); 
-      localStorage.removeItem('usuario');
-      window.location.href = "/"; 
-    }
-    return Promise.reject(error);
-  }
-);
+
 
 export default axiosInstance;
