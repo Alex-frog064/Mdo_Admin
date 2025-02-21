@@ -8,8 +8,9 @@ export default function ProductCard() {
   const [showModal, setShowModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [productos, setProductos] = useState([]);
+  const [searchId, setSearchId] = useState("");
 
-  // Función para obtener los primeros 10 productos desde la API
+  // Función para obtener productos desde la API
   const fetchProductos = async () => {
     try {
       const response = await axiosInstance.get("/productos?page=1&limit=10");
@@ -33,6 +34,21 @@ export default function ProductCard() {
     }
   };
 
+  // Función para buscar un producto por ID
+  const handleSearch = async () => {
+    if (!searchId) {
+      fetchProductos();
+      return;
+    }
+    try {
+      const response = await axiosInstance.get(`/productos/${searchId}`);
+      setProductos([response.data]);
+    } catch (error) {
+      console.error("Error al buscar el producto:", error);
+      setProductos([]);
+    }
+  };
+
   return (
     <div className="p-4 flex flex-col items-center">
       {/* Barra de búsqueda y botón de agregar */}
@@ -40,10 +56,16 @@ export default function ProductCard() {
         <div className="relative w-3/4">
           <input
             type="text"
+            value={searchId}
+            onChange={(e) => setSearchId(e.target.value)}
             placeholder="Buscar por id..."
-            className="w-full p-3 pl-4 pr-10 rounded-full bg-gray-800 shadow-md"
+            className="w-full p-3 pl-4 pr-10 rounded-full bg-gray-800 shadow-md text-black"
           />
-          <Search className="absolute right-3 top-3 text-gray-500" size={20} />
+          <Search
+            className="absolute right-3 top-3 text-gray-500 cursor-pointer"
+            size={20}
+            onClick={handleSearch}
+          />
         </div>
         <button
           onClick={() => setShowModal(true)}

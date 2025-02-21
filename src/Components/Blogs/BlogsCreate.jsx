@@ -1,24 +1,81 @@
 import { useState } from "react";
+import axiosInstance from "../../../Conexion/AxiosInstance";
+import { useNavigate } from "react-router-dom"; // Para redirigir en caso de error
 
 export default function BlogsCreate({ onClose }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("Cuidado"); // Valor inicial
   const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate(); // Para redirigir en caso de error
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setImage(URL.createObjectURL(file));
+      setImage(file); // Guarda el archivo de imagen
     }
   };
 
   // Opciones de categoría
   const categories = ["Cuidado", "Paseos", "Alimentación"];
 
+  const handleCreateBlog = async () => {
+    setLoading(true);
+
+    // Obtener el id_veterinario desde el localStorage
+    const id_veterinario = localStorage.getItem("id_veterinario") || "7167"; // Cambia esto según tu lógica
+
+    // Crear un objeto FormData para enviar la imagen
+    const formData = new FormData();
+    formData.append("titulo", title);
+    formData.append("categoria", category);
+    formData.append("id_veterinario", id_veterinario);
+    formData.append("contenido", content);
+    if (image) {
+      formData.append("imagen", image); // Añade la imagen al FormData
+    }
+
+    try {
+      // Usar axiosInstance para enviar la solicitud
+      const response = await axiosInstance.post("/blogs", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Especifica el tipo de contenido
+        },
+      });
+
+      if (response.status === 201) { // 201 significa "Created"
+        alert("Blog creado exitosamente");
+        onClose(); // Cierra el modal después de crear
+      } else {
+        alert("Error al crear el blog");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+
+      // Mostrar detalles del error
+      if (error.response) {
+        console.log("Respuesta del servidor:", error.response.data);
+        alert(`Error: ${error.response.data.message || "Datos incorrectos"}`);
+      } else if (error.request) {
+        alert("No se recibió respuesta del servidor");
+      } else {
+        alert("Error al enviar la solicitud");
+      }
+
+      // Manejar errores de autenticación
+      if (error.response && error.response.status === 401) {
+        alert("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
+        navigate("/SignIn"); // Redirige al usuario a la página de inicio de sesión
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-      <div className="relative w-[600px] bg-white rounded-lg overflow-hidden shadow-2xl">
+      <div className="relative w-[500px] bg-white rounded-lg overflow-hidden shadow-2xl">
         {/* Botón de cerrar */}
         <button
           onClick={onClose}
@@ -41,16 +98,30 @@ export default function BlogsCreate({ onClose }) {
         </button>
 
         {/* Imagen del blog */}
-        <div className="w-full h-64 bg-gray-200 overflow-hidden">
+        <div className="w-full h-48 bg-gray-200 overflow-hidden relative">
           {image ? (
             <img
-              src={image}
+              src={URL.createObjectURL(image)} // Muestra la imagen seleccionada
               alt="Blog cover"
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex justify-center items-center text-gray-500">
-              <span className="text-xl">📷</span>
+            <div className="w-full h-full flex justify-center items-center text-gray-500 cursor-pointer">
+              {/* Input oculto para subir la imagen */}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                id="image-upload"
+              />
+              {/* Ícono que activa el input */}
+              <label
+                htmlFor="image-upload"
+                className="text-xl cursor-pointer"
+              >
+                📷
+              </label>
             </div>
           )}
         </div>
@@ -100,28 +171,14 @@ export default function BlogsCreate({ onClose }) {
             </select>
           </div>
 
-          {/* Input para subir imagen */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-          </div>
-
           {/* Botón para crear blog */}
           <div className="flex justify-end">
             <button
-              onClick={() => {
-                // Aquí puedes agregar la lógica para crear el blog
-                console.log("Crear blog:", { title, content, category, image });
-                onClose(); // Cierra el modal después de crear
-              }}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={handleCreateBlog}
+              disabled={loading}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-300"
             >
-              Crear blog
+              {loading ? "Creando..." : "Crear blog"}
             </button>
           </div>
         </div>
