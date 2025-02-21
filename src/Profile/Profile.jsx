@@ -74,18 +74,7 @@ const ProfileUpdate = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-10">
-      {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-80 text-center">
-            <h2 className="text-xl font-bold mb-4">Sesión no iniciada</h2>
-            <p className="mb-4">Por favor, inicia sesión o regístrate para continuar.</p>
-            <div className="flex justify-center gap-4">
-              <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={() => navigate("/login")}>Iniciar Sesión</button>
-              <button className="bg-green-500 text-white px-4 py-2 rounded" onClick={() => navigate("/register")}>Registrarse</button>
-            </div>
-          </div>
-        </div>
-      )}
+     
 
       <div className="bg-white p-6 sm:p-8 rounded-lg shadow-2xl w-full max-w-4xl flex flex-col sm:flex-row">
         <div className="w-full sm:w-1/3 flex flex-col items-center justify-center border-b sm:border-b-0 sm:border-r pr-6 pb-6 sm:pb-0">

@@ -86,19 +86,12 @@ export default function TablaCitas() {
   
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-  
-      
+      }   
     } catch (error) {
       window.location.reload(); // che adrian quita el error
       
     }
   };
-  
-  
-  
-  
-  
 
   const citasFiltradas = citas.filter(
     (cita) =>
@@ -122,7 +115,7 @@ export default function TablaCitas() {
           <thead className="text-left bg-gray-100 text-gray-600 text-sm">
             <tr>
               <th className="p-3">ID</th>
-              <th className="p-3">ID Veterinario</th>
+              
               <th className="p-3">Fecha cita</th>
               <th className="p-3">Hora cita</th>
               <th className="p-3">Razon</th>
@@ -136,25 +129,22 @@ export default function TablaCitas() {
               citasFiltradas.map((cita) => (
                 <tr key={cita.id} className="border-b text-sm hover:bg-gray-50">
                   <td className="p-3">{cita.id}</td>
-                  <td className="p-3">{cita.id_veterinario}</td>
                   <td className="p-3">{cita.fecha_cita}</td>
                   <td className="p-3">{cita.hora_cita}</td>
                   <td className="p-3">{cita.razon}</td>
                   <td className="p-3">{cita.mascota}</td>
                   <td className="p-3">
                   <select
-  value={cita.estado} 
-  onChange={(e) => handleEstadoChange(cita.id, e.target.value)}
-  className={`px-2 py-1 rounded text-white cursor-pointer outline-none 
-    ${cita.estado === "pendiente" ? "bg-yellow-500" : 
-      cita.estado === "confirmada" ? "bg-green-500" : "bg-red-500"}`}
->
-  <option value="pendiente" className="text-black">Pendiente</option>
-  <option value="confirmada" className="text-black">Aceptada</option>
-  <option value="rechazada" className="text-black">Rechazada</option>
-</select>
-
-
+                      value={cita.estado} 
+                      onChange={(e) => handleEstadoChange(cita.id, e.target.value)}
+                      className={`px-2 py-1 rounded text-white cursor-pointer outline-none 
+                        ${cita.estado === "pendiente" ? "bg-yellow-500" : 
+                          cita.estado === "confirmada" ? "bg-green-500" : "bg-red-500"}`}
+                    >
+                      <option value="pendiente" className="text-black">Pendiente</option>
+                      <option value="confirmada" className="text-black">Aceptada</option>
+                      <option value="rechazada" className="text-black">Rechazada</option>
+                  </select>
                   </td>
                   <td className="p-3 flex justify-center gap-3">
                     <button className="text-blue-500 hover:underline">Ver</button>
