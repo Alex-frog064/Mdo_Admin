@@ -1,11 +1,15 @@
-import React, { useState } from "react";
-import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
+import React, { useState, useEffect } from "react";
+import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, startOfMonth, endOfMonth, isAfter, startOfDay, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 import TimePicker from "./TimePicker";
+import axiosInstance from "../../../Conexion/AxiosInstance";
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [availability, setAvailability] = useState({});
   const [editDay, setEditDay] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const startWeek = startOfWeek(currentDate, { weekStartsOn: 1 });
   const endWeek = endOfWeek(currentDate, { weekStartsOn: 1 });
@@ -18,96 +22,202 @@ const Calendar = () => {
     }));
   };
 
-  const applySchedule = (schedule, period) => {
-    const newAvailability = { ...availability };
-    let startDate, endDate;
-
-    if (period === "week") {
-      startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
-      endDate = endOfWeek(currentDate, { weekStartsOn: 1 });
-    } else if (period === "month") {
-      startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
-      endDate = addDays(startDate, 30);
-    }
-
-    eachDayOfInterval({ start: startDate, end: endDate }).forEach((day) => {
-      newAvailability[format(day, "yyyy-MM-dd")] = schedule;
-    });
-
-    setAvailability(newAvailability);
+  // Obtener el ID del veterinario del localStorage
+  const getVetId = () => {
+    const userData = JSON.parse(localStorage.getItem('usuario'));
+    return userData?.veterinario?.id;
   };
 
-  return (
-    <div className="p-6 flex flex-col items-center">
-      <h2 className="text-2xl font-semibold mb-4 text-center">Calendario de Disponibilidad</h2>
+  // Función para guardar disponibilidad individual
+  const saveAvailability = async (date, timeSlot) => {
+    const vetId = getVetId();
+    if (!vetId) {
+      setError("No se encontró ID del veterinario");
+      return;
+    }
 
-      <div className="flex justify-between items-center w-full max-w-4xl mb-6">
-        <button onClick={() => setCurrentDate(addDays(currentDate, -7))} className="bg-blue-500 text-white px-4 py-2 rounded-lg">
-          Semana Anterior
-        </button>
-        <div className="flex gap-4">
-          <button onClick={() => applySchedule({ open: "09:00", close: "18:00" }, "week")} className="bg-green-500 text-white px-4 py-2 rounded-lg">
-            Aplicar a toda la semana
+    try {
+      const response = await axiosInstance.post('/disponibilidad', {
+        id_veterinario: vetId,
+        fecha: format(date, 'yyyy-MM-dd'),
+        hora_inicio: timeSlot.open,
+        hora_fin: timeSlot.close
+      });
+
+      setAvailability(prev => ({
+        ...prev,
+        [format(date, 'yyyy-MM-dd')]: timeSlot
+      }));
+
+      setError(null);
+    } catch (err) {
+      setError("Error al guardar la disponibilidad");
+      console.error(err);
+    }
+  };
+
+  // Función para aplicar horario masivo (semanal o mensual)
+  const applyBulkSchedule = async (timeSlot, period) => {
+    setLoading(true);
+    const vetId = getVetId();
+    
+    try {
+      let dates;
+      const today = new Date();
+
+      if (period === 'week') {
+        const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+        dates = [...Array(7)].map((_, i) => addDays(weekStart, i));
+      } else if (period === 'month') {
+        const monthStart = startOfMonth(today);
+        const monthEnd = endOfMonth(today);
+        dates = eachDayOfInterval({ start: monthStart, end: monthEnd });
+      }
+
+      // Realizar las peticiones en secuencia para evitar sobrecarga
+      for (const date of dates) {
+        await saveAvailability(date, timeSlot);
+      }
+
+      setError(null);
+    } catch (err) {
+      setError(`Error al aplicar horario ${period === 'week' ? 'semanal' : 'mensual'}`);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar disponibilidades existentes y filtrar solo las actuales y futuras
+  const fetchAvailabilities = async () => {
+    const vetId = getVetId();
+    if (!vetId) return;
+
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get(`/disponibilidad/veterinario/${vetId}`);
+      const availabilityMap = {};
+      
+      const today = startOfDay(new Date()); // Obtiene la fecha actual sin hora
+
+      // Filtra y mapea solo las fechas actuales y futuras
+      response.data
+        .filter(slot => {
+          const slotDate = parseISO(slot.fecha); // Convierte el string de fecha a objeto Date
+          return isAfter(slotDate, today) || format(slotDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+        })
+        .forEach(slot => {
+          availabilityMap[slot.fecha] = {
+            id: slot.id,
+            open: slot.hora_inicio.substring(0, 5), // Removemos los segundos
+            close: slot.hora_fin.substring(0, 5),   // Removemos los segundos
+          };
+        });
+
+      setAvailability(availabilityMap);
+      setError(null);
+    } catch (err) {
+      console.error("Error al cargar disponibilidades:", err);
+      setError("Error al cargar las disponibilidades");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar disponibilidades al montar el componente
+  useEffect(() => {
+    fetchAvailabilities();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-sky-50 p-6 sm:p-10">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-4xl font-bold mb-10 text-center text-sky-900 tracking-wide">
+          Organizador Semanal
+        </h1>
+
+        {loading && (
+          <div className="fixed inset-0 bg-black/20 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-lg shadow-lg">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mx-auto"></div>
+              <p className="mt-2">Cargando disponibilidades...</p>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
+
+        <div className="relative bg-white/50 backdrop-blur-sm rounded-2xl p-8 shadow-sm">
+          <div className="absolute left-12 top-0 bottom-0 w-0.5 bg-sky-200"></div>
+          
+          {daysOfWeek.map((day) => (
+            <div 
+              key={day.toString()}
+              className="flex items-start mb-6 relative"
+            >
+              <div className="absolute -left-12 top-1/2 w-4 h-4 rounded-full bg-sky-300 -mt-2"></div>
+              <div className="w-40 mr-8">
+                <h3 className="text-lg font-semibold text-sky-800">
+                  {format(day, "EEEE")}
+                </h3>
+                <p className="text-sm text-sky-600">
+                  {format(day, "d MMMM")}
+                </p>
+              </div>
+
+              <div className="flex-1 bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200">
+                {editDay && isSameDay(editDay, day) ? (
+                  <TimePicker
+                    initialOpen={availability[format(day, "yyyy-MM-dd")]?.open || "09:00"}
+                    initialClose={availability[format(day, "yyyy-MM-dd")]?.close || "18:00"}
+                    onSave={(open, close) => {
+                      handleAvailabilityChange(day, open, close);
+                      setEditDay(null);
+                    }}
+                  />
+                ) : (
+                  <div className="flex justify-between items-center">
+                    <div className="space-y-1">
+                      <p className="text-sky-700">
+                        <span className="text-sky-500">Apertura:</span>{" "}
+                        {availability[format(day, "yyyy-MM-dd")]?.open || "—"}
+                      </p>
+                      <p className="text-sky-700">
+                        <span className="text-sky-500">Cierre:</span>{" "}
+                        {availability[format(day, "yyyy-MM-dd")]?.close || "—"}
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => setEditDay(day)}
+                      className="px-4 py-2 bg-sky-100 text-sky-700 rounded-lg hover:bg-sky-200 transition-colors duration-200"
+                    >
+                      Editar
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-center gap-4 mt-8">
+          <button 
+            onClick={() => applyBulkSchedule({ open: "09:00", close: "18:00" }, "week")}
+            className="px-6 py-2 bg-sky-200 text-sky-800 rounded-full hover:bg-sky-300 transition-colors duration-200"
+          >
+            Aplicar horario semanal
           </button>
-          <button onClick={() => applySchedule({ open: "10:00", close: "15:00" }, "month")} className="bg-green-500 text-white px-4 py-2 rounded-lg">
-            Aplicar a todo el mes
+          <button 
+            onClick={() => applyBulkSchedule({ open: "10:00", close: "15:00" }, "month")}
+            className="px-6 py-2 bg-sky-200 text-sky-800 rounded-full hover:bg-sky-300 transition-colors duration-200"
+          >
+            Aplicar horario mensual
           </button>
         </div>
-        <button onClick={() => setCurrentDate(addDays(currentDate, 7))} className="bg-blue-500 text-white px-4 py-2 rounded-lg">
-          Siguiente Semana
-        </button>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 max-w-4xl">
-        {daysOfWeek.slice(0, 3).map((day) => (
-          <div key={day.toString()} className="p-4 border rounded-lg shadow-md w-full text-center">
-            <div className="font-semibold mb-2">{format(day, "EEEE, d MMMM")}</div>
-            {editDay && isSameDay(editDay, day) ? (
-              <TimePicker
-                initialOpen={availability[format(day, "yyyy-MM-dd")]?.open || "09:00"}
-                initialClose={availability[format(day, "yyyy-MM-dd")]?.close || "18:00"}
-                onSave={(open, close) => {
-                  handleAvailabilityChange(day, open, close);
-                  setEditDay(null);
-                }}
-              />
-            ) : (
-              <div>
-                <p>Apertura: {availability[format(day, "yyyy-MM-dd")]?.open || "Cerrado"}</p>
-                <p>Cierre: {availability[format(day, "yyyy-MM-dd")]?.close || "Cerrado"}</p>
-                <button onClick={() => setEditDay(day)} className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg">
-                  Editar
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 max-w-4xl mt-4">
-        {daysOfWeek.slice(3).map((day) => (
-          <div key={day.toString()} className="p-4 border rounded-lg shadow-md w-full text-center">
-            <div className="font-semibold mb-2">{format(day, "EEEE, d MMMM")}</div>
-            {editDay && isSameDay(editDay, day) ? (
-              <TimePicker
-                initialOpen={availability[format(day, "yyyy-MM-dd")]?.open || "09:00"}
-                initialClose={availability[format(day, "yyyy-MM-dd")]?.close || "18:00"}
-                onSave={(open, close) => {
-                  handleAvailabilityChange(day, open, close);
-                  setEditDay(null);
-                }}
-              />
-            ) : (
-              <div>
-                <p>Apertura: {availability[format(day, "yyyy-MM-dd")]?.open || "Cerrado"}</p>
-                <p>Cierre: {availability[format(day, "yyyy-MM-dd")]?.close || "Cerrado"}</p>
-                <button onClick={() => setEditDay(day)} className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg">
-                  Editar
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
       </div>
     </div>
   );

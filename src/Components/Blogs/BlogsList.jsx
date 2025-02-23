@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Pencil, Trash2, Search } from "lucide-react";
+import { Pencil, Trash2, Search, Plus } from "lucide-react";
 import axiosInstance from "../../../Conexion/AxiosInstance";
 import BlogsCreate from "./BlogsCreate";
 import BlogUpdate from "./BlogUpdate";
@@ -88,8 +88,25 @@ export default function BlogList() {
           <p className="text-gray-500">No hay blogs disponibles.</p>
         ) : (
           blogs.map((blog) => (
-            <div key={blog.id} className="shadow-md rounded-lg overflow-hidden relative bg-white">
-              <img src={blog.imagen} alt={blog.titulo} className="w-full h-48 object-cover" />
+            <div key={blog.id} className="shadow-md rounded-lg overflow-hidden relative bg-white group">
+              <div className="relative">
+                <img src={blog.imagen} alt={blog.titulo} className="w-full h-48 object-cover" />
+                {/* Overlay con acciones */}
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity">
+                  <button
+                    onClick={() => handleUpdateClick(blog)}
+                    className="p-2 bg-white rounded-full hover:bg-sky-50 transition-colors"
+                  >
+                    <Pencil className="w-5 h-5 text-sky-500" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(blog.id)}
+                    className="p-2 bg-white rounded-full hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 className="w-5 h-5 text-red-500" />
+                  </button>
+                </div>
+              </div>
               <div className="p-4">
                 <span className="text-blue-500 text-sm font-medium">{blog.categoria}</span>
                 <h3 className="text-lg font-semibold mt-2">{blog.titulo}</h3>
@@ -97,19 +114,6 @@ export default function BlogList() {
                 
                 </p>
               </div>
-            
-              <button
-                onClick={() => handleUpdateClick(blog)}
-                className="absolute top-4 right-4 bg-white p-2 rounded-full shadow"
-              >
-                <Pencil className="w-4 h-4 text-gray-600" />
-              </button>
-              <button
-                onClick={() => handleDelete(blog.id)}
-                className="absolute top-14 right-4 bg-white p-2 rounded-full shadow"
-              >
-                <Trash2 className="w-4 h-4 text-gray-600" />
-              </button>
             </div>
           ))
         )}

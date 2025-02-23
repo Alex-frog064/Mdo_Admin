@@ -1,71 +1,143 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaEdit, FaSignOutAlt, FaLock, FaUnlock, FaPlus, FaCamera } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../Conexion/AxiosInstance";
 
 const ProfileUpdate = () => {
   const [formData, setFormData] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
+  // Obtener el ID del veterinario del localStorage
+  const getVetId = () => {
+    const userData = JSON.parse(localStorage.getItem('usuario'));
+    return userData?.veterinario?.id;
+  };
+
   useEffect(() => {
-    const token = localStorage.getItem("jwt");
-    if (!token) {
-      setShowModal(true);
-      return;
-    }
-
     const fetchVeterinario = async () => {
-      const usuarioData = JSON.parse(localStorage.getItem("usuario"));
-      const usuarioId = usuarioData?.veterinario?.id;
-
-      if (!token || !usuarioId) {
-        console.warn("⚠️ No se encontró token o ID en localStorage.");
+      const vetId = getVetId();
+      if (!vetId) {
+        setError("No se encontró ID del veterinario");
         setLoading(false);
         return;
       }
 
       try {
-        const response = await fetch(
-          `https://api-mascoticobereal.onrender.com/veterinario/${usuarioId}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (response.status === 401) {
-          localStorage.removeItem("jwt");
-          navigate("/login");
-          return;
-        }
-
-        const data = await response.json();
-        setFormData(data);
+        const response = await axiosInstance.get(`/veterinario/${vetId}`);
+        setFormData(response.data);
+        setError("");
       } catch (error) {
-        console.error("❌ Error al obtener los datos:", error);
+        console.error("Error al obtener los datos:", error);
+        setError("Error al cargar los datos del perfil");
       } finally {
         setLoading(false);
       }
     };
 
     fetchVeterinario();
-  }, [navigate]);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
+    setFormData(prevData => ({
       ...prevData,
       [name]: value,
     }));
   };
 
+  const handleSubmit = async () => {
+    const vetId = getVetId();
+    if (!vetId) {
+      setError("No se encontró ID del veterinario");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axiosInstance.put(`/veterinario/${vetId}`, formData);
+      
+      if (response.status === 200) {
+        setSuccessMessage("Datos actualizados correctamente");
+        setIsEditing(false);
+        // Actualizar datos en localStorage si es necesario
+        const userData = JSON.parse(localStorage.getItem('usuario'));
+        userData.veterinario = { ...userData.veterinario, ...formData };
+        localStorage.setItem('usuario', JSON.stringify(userData));
+      }
+    } catch (error) {
+      console.error("Error al actualizar los datos:", error);
+      setError("Error al actualizar los datos del perfil");
+    } finally {
+      setLoading(false);
+      // El mensaje de éxito desaparecerá después de 3 segundos
+      setTimeout(() => setSuccessMessage(""), 3000);
+    }
+  };
+
   const toggleEditing = () => {
-    setIsEditing(!isEditing);
+    if (isEditing) {
+      // Si estamos guardando los cambios
+      handleSubmit();
+    } else {
+      // Si estamos activando el modo edición
+      setIsEditing(true);
+    }
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      setError("Por favor selecciona una imagen válida");
+      return;
+    }
+
+    // Crear preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    // Preparar para subir
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('imagen', file);
+
+      const vetId = getVetId();
+      const response = await axiosInstance.put(`/veterinario/${vetId}/imagen`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.status === 200) {
+        setSuccessMessage("Imagen actualizada correctamente");
+        // Actualizar datos en localStorage si es necesario
+        const userData = JSON.parse(localStorage.getItem('usuario'));
+        userData.veterinario.imagen = response.data.imagen;
+        localStorage.setItem('usuario', JSON.stringify(userData));
+      }
+    } catch (error) {
+      console.error("Error al actualizar la imagen:", error);
+      setError("Error al actualizar la imagen de perfil");
+    } finally {
+      setLoading(false);
+      setTimeout(() => setSuccessMessage(""), 3000);
+    }
   };
 
   if (loading) {
@@ -73,40 +145,73 @@ const ProfileUpdate = () => {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-10">
-     
-
-      <div className="bg-white p-6 sm:p-8 rounded-lg shadow-2xl w-full max-w-4xl flex flex-col sm:flex-row">
-        <div className="w-full sm:w-1/3 flex flex-col items-center justify-center border-b sm:border-b-0 sm:border-r pr-6 pb-6 sm:pb-0">
-          <div className="relative w-32 h-32 bg-gray-300 rounded-full overflow-hidden shadow-lg">
-            <img src="../assets/fondo.png" alt="Profile" className="w-full h-full object-cover" />
-            <button className="absolute bottom-0 right-0 bg-gray-700 text-white p-2 rounded-full shadow-md hover:bg-gray-600">
-              <FaCamera />
-            </button>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-lg overflow-hidden flex">
+        {/* Panel izquierdo azul pastel */}
+        <div className="w-1/3 bg-sky-100 p-12 flex flex-col items-center justify-center text-center">
+          <div className="relative mb-8 group">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+              className="hidden"
+              accept="image/*"
+            />
+            <div 
+              onClick={handleImageClick}
+              className="w-32 h-32 bg-sky-200 rounded-full overflow-hidden cursor-pointer relative group"
+            >
+              <img
+                src={imagePreview || formData.imagen || "../assets/fondo.png"}
+                alt="Profile"
+                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <FaCamera className="w-8 h-8 text-white" />
+              </div>
+            </div>
           </div>
-          <button className="border-2 border-black text-black rounded-full px-4 py-2 mt-4 flex items-center gap-2 font-semibold hover:bg-blue-500 hover:text-white">
-            <FaPlus /> Agregar archivo
-          </button>
+          <h2 className="text-2xl font-semibold text-sky-900 mb-4">
+            {formData.nombre || "Información del Perfil"}
+          </h2>
+          <p className="text-sky-700 text-sm">
+            Gestiona tu información personal
+          </p>
         </div>
 
-        <div className="w-full sm:w-2/3 pl-6">
-          <h2 className="text-xl sm:text-2xl font-semibold mb-6">Información General</h2>
+        {/* Panel derecho con formulario */}
+        <div className="w-2/3 p-12 bg-white">
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-lg">
+              {error}
+            </div>
+          )}
+          
+          {successMessage && (
+            <div className="mb-4 p-4 bg-green-50 text-green-600 rounded-lg">
+              {successMessage}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {Object.keys(formData).map((field, index) => (
               <div key={index} className="relative">
-                <label className={`block text-sm font-medium mb-1 ${isEditing ? "text-gray-700" : "text-gray-500"}`}>
+                <label className={`block text-sm font-medium mb-1 ${isEditing ? "text-sky-900" : "text-sky-600"}`}>
                   {field.replace("_", " ")}
                 </label>
                 <div className="relative">
                   <input
-                    type={field.includes("Contraseña") ? "password" : "text"}
+                    type={field.includes("contraseña") ? "password" : "text"}
                     name={field}
                     value={formData[field] || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
-                    className={`w-full p-3 rounded-lg pr-10 transition-all duration-300 shadow-inner ${isEditing ? "bg-white text-gray-700" : "bg-gray-200 text-gray-500 cursor-not-allowed"}`}
+                    className={`w-full px-4 py-3 rounded-lg pr-10 transition-all duration-300 
+                      ${isEditing 
+                        ? "bg-white border border-sky-100 focus:ring-2 focus:ring-sky-100 focus:border-sky-300" 
+                        : "bg-sky-50 text-sky-700 cursor-not-allowed"}`}
                   />
-                  <span className={`absolute right-3 top-3 ${isEditing ? "text-gray-600" : "text-gray-400"}`}>
+                  <span className={`absolute right-3 top-3 ${isEditing ? "text-sky-500" : "text-sky-400"}`}>
                     {isEditing ? <FaUnlock /> : <FaLock />}
                   </span>
                 </div>
@@ -114,19 +219,37 @@ const ProfileUpdate = () => {
             ))}
           </div>
           
-          <div className="flex flex-col sm:flex-row justify-between mt-6 gap-4">
+          <div className="flex justify-end gap-4 mt-8">
             <button 
-              className="border-2 border-black text-black rounded-full px-4 py-2 flex items-center gap-2 font-semibold hover:bg-red-600 hover:text-white"
+              className="px-6 py-2 text-sky-600 hover:bg-sky-50 rounded-lg transition-colors flex items-center gap-2"
               onClick={() => navigate("/SignIn")}
             >
-              <FaSignOutAlt /> Cerrar cuenta
+              <FaSignOutAlt /> 
+              Cerrar cuenta
             </button>
-            <button className="border-2 border-black text-black rounded-full px-4 py-2 flex items-center gap-2 font-semibold hover:bg-blue-500 hover:text-white" onClick={toggleEditing}>
-              <FaEdit /> {isEditing ? "Guardar" : "Editar"}
+            <button 
+              className={`px-8 py-2 rounded-lg transition-colors flex items-center gap-2
+                ${isEditing 
+                  ? "bg-green-500 text-white hover:bg-green-600" 
+                  : "bg-sky-400 text-white hover:bg-sky-500"}`}
+              onClick={toggleEditing}
+              disabled={loading}
+            >
+              <FaEdit />
+              {isEditing ? "Guardar cambios" : "Editar"}
             </button>
           </div>
         </div>
       </div>
+
+      {loading && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center">
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mx-auto"></div>
+            <p className="mt-2">Procesando...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

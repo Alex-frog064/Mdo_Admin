@@ -93,10 +93,10 @@ export default function ProductCard() {
               <h3 className="text-blue1">ID: {producto.id}</h3>
               <div className="flex flex-col items-start gap-2 my-2">
                 <span className="border px-3 py-1 text-blue1 rounded-lg shadow-sm">{producto.marca}</span>
-                <span className="border px-3 py-1 text-blue1 rounded-lg shadow-sm">{producto.mascota}</span>
+                <span className="border px-3 py-1 text-blue1 rounded-lg shadow-sm">Animal: {producto.mascota}</span>
                 <div className="flex gap-2">
                   <span className="border px-3 py-1 text-blue1 rounded-lg shadow-sm">{producto.edad}</span>
-                  <span className="border px-3 py-1 text-blue1 rounded-lg shadow-sm">{producto.stock}</span>
+                  <span className="border px-3 py-1 text-blue1 rounded-lg shadow-sm">Stock: {producto.stock}</span>
                 </div>
               </div>
             </div>
