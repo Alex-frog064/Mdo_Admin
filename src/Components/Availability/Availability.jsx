@@ -98,9 +98,7 @@ const Calendar = () => {
       const response = await axiosInstance.get(`/disponibilidad/veterinario/${vetId}`);
       const availabilityMap = {};
       
-      const today = startOfDay(new Date()); // Obtiene la fecha actual sin hora
-
-      // Filtra y mapea solo las fechas actuales y futuras
+      const today = startOfDay(new Date()); 
       response.data
         .filter(slot => {
           const slotDate = parseISO(slot.fecha); // Convierte el string de fecha a objeto Date
@@ -109,8 +107,8 @@ const Calendar = () => {
         .forEach(slot => {
           availabilityMap[slot.fecha] = {
             id: slot.id,
-            open: slot.hora_inicio.substring(0, 5), // Removemos los segundos
-            close: slot.hora_fin.substring(0, 5),   // Removemos los segundos
+            open: slot.hora_inicio.substring(0, 5), 
+            close: slot.hora_fin.substring(0, 5),   
           };
         });
 
@@ -124,7 +122,6 @@ const Calendar = () => {
     }
   };
 
-  // Cargar disponibilidades al montar el componente
   useEffect(() => {
     fetchAvailabilities();
   }, []);
