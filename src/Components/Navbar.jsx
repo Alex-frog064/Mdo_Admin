@@ -4,6 +4,7 @@ import { createContext, useState } from "react";
 export const SlidebarContext = createContext();
 
 export default function Navbar({ children }) {
+
   const [expanded, setExpanded] = useState(true);
 
   return (

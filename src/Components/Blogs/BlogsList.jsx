@@ -9,12 +9,16 @@ export default function BlogList() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedBlog, setSelectedBlog] = useState(null);
   const [blogs, setBlogs] = useState([]);
-  const [searchId, setSearchId] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [error, setError] = useState(null);
 
-  // Obtener todos los blogs
+  // Obtener el ID del veterinario autenticado
+  const idVeterinario = 7967;
+
+  // Obtener todos los blogs del veterinario autenticado
   const fetchBlogs = async () => {
     try {
-      const response = await axiosInstance.get("/blogs");
+      const response = await axiosInstance.get(`/blogs/veterinario/${idVeterinario}`);
       setBlogs(response.data);
     } catch (error) {
       console.error("Error al obtener blogs:", error);
@@ -22,24 +26,29 @@ export default function BlogList() {
   };
 
   useEffect(() => {
-    fetchBlogs();
-  }, []);
-
-  // Buscar blog por ID
-  const handleSearch = async () => {
-    if (!searchId) {
+    if (idVeterinario) {
       fetchBlogs();
-      return;
     }
+  }, [idVeterinario]);
+
+
+   const buscarBlog = async () => {
     try {
-      const response = await axiosInstance.get(`/blogs/${searchId}`);
-      setBlogs([response.data]);
-    } catch (error) {
-      console.error("Error al buscar el blog:", error);
+      const response = await fetch(
+        `https://api-mascoticobereal.onrender.com/blog/nombre?nombre=${nombre}`
+      );
+      if (!response.ok) {
+        throw new Error("No se pudo obtener el blog");
+      }
+      const data = await response.json();
+      setBlogs(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
       setBlogs([]);
     }
   };
-
+  
   // Eliminar un blog por ID
   const handleDelete = async (id) => {
     try {
@@ -57,21 +66,20 @@ export default function BlogList() {
 
   return (
     <div className="p-6">
-     
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Blogs creados</h2>
+        <h2 className="text-2xl font-semibold">Mis Blogs</h2>
         <div className="relative w-1/3">
           <input
             type="text"
-            value={searchId}
-            onChange={(e) => setSearchId(e.target.value)}
-            placeholder="Buscar por ID..."
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Buscar..."
             className="w-full p-3 pl-4 pr-10 rounded-full bg-gray-800 shadow-md text-black"
           />
           <Search
             className="absolute right-3 top-3 text-gray-500 cursor-pointer"
             size={20}
-            onClick={handleSearch}
+            onClick={buscarBlog }
           />
         </div>
         <button
@@ -110,8 +118,8 @@ export default function BlogList() {
               <div className="p-4">
                 <span className="text-blue-500 text-sm font-medium">{blog.categoria}</span>
                 <h3 className="text-lg font-semibold mt-2">{blog.titulo}</h3>
-                <p className="text-sm text-gray-500 mt-2">ID: {blog.id_veterinario} • {blog.fecha_publicacion} 
-                
+                <p className="text-sm text-gray-500 mt-2">
+                  ID: {blog.id_veterinario} • {blog.fecha_publicacion}
                 </p>
               </div>
             </div>
@@ -119,16 +127,8 @@ export default function BlogList() {
         )}
       </div>
 
-     
       {showModal && <BlogsCreate onClose={() => setShowModal(false)} />}
-
-     
-      {showUpdateModal && (
-        <BlogUpdate
-          blog={selectedBlog}
-          onClose={() => setShowUpdateModal(false)}
-        />
-      )}
+      {showUpdateModal && <BlogUpdate blog={selectedBlog} onClose={() => setShowUpdateModal(false)} />}
     </div>
   );
 }

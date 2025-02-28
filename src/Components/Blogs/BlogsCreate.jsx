@@ -24,7 +24,19 @@ export default function BlogsCreate({ onClose }) {
     setLoading(true);
 
     // Obtener el id_veterinario desde el localStorage
-    const id_veterinario = localStorage.getItem("id_veterinario") || "7167"; // Cambia esto según tu lógica
+const idVeterinario = localStorage.getItem("usuario"); // Obtienes el id desde localStorage
+if (idVeterinario) {
+  const url = `/disponibilidad/veterinario/${idVeterinario}`; // Usas el id para formar la URL
+  try {
+    const response = await axiosInstance.get(url); // Realizas la petición GET
+    console.log(response.data); // Muestras la respuesta en la consola
+  } catch (error) {
+    console.error("Error en la consulta:", error); // Muestras el error si ocurre
+  }
+} else {
+  console.error("No se encontró el id del veterinario en el localStorage."); // Si no se encuentra el id
+}
+
 
     // Crear un objeto FormData para enviar la imagen
     const formData = new FormData();

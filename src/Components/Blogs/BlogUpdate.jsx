@@ -5,6 +5,7 @@ export default function BlogUpdate({ blog, onClose }) {
   const [content, setContent] = useState(blog.content || "");
   const [category, setCategory] = useState(blog.category);
   const [image, setImage] = useState(blog.image);
+  
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
