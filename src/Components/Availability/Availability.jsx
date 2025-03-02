@@ -17,6 +17,8 @@ import {
 import { es } from "date-fns/locale";
 import TimePicker from "./TimePicker";
 import axiosInstance from "../../../Conexion/AxiosInstance";
+import BulkScheduleModal from "./BulkScheduleModal";
+import { Clock } from "lucide-react";
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -24,6 +26,7 @@ const Calendar = () => {
   const [editDay, setEditDay] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showBulkModal, setShowBulkModal] = useState(false);
 
   // Obtener el inicio y fin de la semana actual
   const startWeek = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -157,29 +160,38 @@ const Calendar = () => {
   }, [currentDate]); // Recargar disponibilidades cuando cambia la semana
 
   return (
-    <div className="min-h-screen bg-sky-50 p-6 sm:p-10">
+    <div className="min-h-screen bg-gradient-to-br from-blue1/5 to-blue2/5 p-6 sm:p-10">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-bold mb-10 text-center text-sky-900 tracking-wide">
-          Organizador Semanal
-        </h1>
+        <div className="flex justify-between items-center mb-10">
+          <h1 className="text-4xl font-bold text-blue1 tracking-wide">
+            Organizador Semanal
+          </h1>
+          <button
+            onClick={() => setShowBulkModal(true)}
+            className="px-6 py-3 bg-gradient-to-r from-blue1 to-blue2 text-white rounded-xl
+                     hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02]"
+          >
+            Configurar Horarios
+          </button>
+        </div>
 
         {loading && (
-          <div className="fixed inset-0 bg-black/20 flex items-center justify-center">
-            <div className="bg-white p-4 rounded-lg shadow-lg">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mx-auto"></div>
-              <p className="mt-2">Cargando disponibilidades...</p>
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-2xl shadow-xl">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue1"></div>
+              <p className="mt-4 text-gray-600">Cargando disponibilidades...</p>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-4">
+          <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6">
             {error}
           </div>
         )}
 
-        <div className="relative bg-white/50 backdrop-blur-sm rounded-2xl p-8 shadow-sm">
-          <div className="absolute left-12 top-0 bottom-0 w-0.5 bg-sky-200"></div>
+        <div className="relative bg-white rounded-2xl p-8 shadow-lg">
+          <div className="absolute left-12 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue1/20 to-blue2/20"></div>
 
           {/* Botones de navegación entre semanas */}
           <div className="flex justify-between mb-6">
@@ -209,32 +221,34 @@ const Calendar = () => {
                 </p>
               </div>
 
-              <div className="flex-1 bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex-1 bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
                 {editDay && isSameDay(editDay, day) ? (
                   <TimePicker
                     initialOpen={availability[format(day, "yyyy-MM-dd")]?.open || "09:00"}
                     initialClose={availability[format(day, "yyyy-MM-dd")]?.close || "18:00"}
-                    onSave={(open, close) => {
-                      handleAvailabilityChange(day, open, close);
+                    onSave={async (open, close) => {
+                      await saveAvailability(day, { open, close });
                       setEditDay(null);
                     }}
                   />
                 ) : (
                   <div className="flex justify-between items-center">
-                    <div className="space-y-1">
-                      <p className="text-sky-700">
-                        <span className="text-sky-500">Apertura:</span>{" "}
+                    <div className="space-y-2">
+                      <p className="text-gray-700">
+                        <span className="text-blue1 font-medium">Apertura:</span>{" "}
                         {availability[format(day, "yyyy-MM-dd")]?.open || "—"}
                       </p>
-                      <p className="text-sky-700">
-                        <span className="text-sky-500">Cierre:</span>{" "}
+                      <p className="text-gray-700">
+                        <span className="text-blue1 font-medium">Cierre:</span>{" "}
                         {availability[format(day, "yyyy-MM-dd")]?.close || "—"}
                       </p>
                     </div>
                     <button
                       onClick={() => setEditDay(day)}
-                      className="px-4 py-2 bg-sky-100 text-sky-700 rounded-lg hover:bg-sky-200 transition-colors duration-200"
+                      className="px-4 py-2 bg-gray-50 text-blue1 rounded-xl hover:bg-gray-100 
+                               transition-all duration-200 flex items-center gap-2"
                     >
+                      <Clock size={18} />
                       Editar
                     </button>
                   </div>
@@ -244,20 +258,17 @@ const Calendar = () => {
           ))}
         </div>
 
-        <div className="flex justify-center gap-4 mt-8">
-          <button
-            onClick={() => applyBulkSchedule({ open: "09:00", close: "18:00" }, "week")}
-            className="px-6 py-2 bg-sky-200 text-sky-800 rounded-full hover:bg-sky-300 transition-colors duration-200"
-          >
-            Aplicar horario semanal
-          </button>
-          <button
-            onClick={() => applyBulkSchedule({ open: "10:00", close: "15:00" }, "month")}
-            className="px-6 py-2 bg-sky-200 text-sky-800 rounded-full hover:bg-sky-300 transition-colors duration-200"
-          >
-            Aplicar horario mensual
-          </button>
-        </div>
+        <BulkScheduleModal
+          isOpen={showBulkModal}
+          onClose={() => setShowBulkModal(false)}
+          onApply={(schedule) => {
+            applyBulkSchedule(
+              { open: schedule.open, close: schedule.close },
+              schedule.period
+            );
+            setShowBulkModal(false);
+          }}
+        />
       </div>
     </div>
   );

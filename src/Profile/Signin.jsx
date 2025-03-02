@@ -24,8 +24,8 @@ export default function SignIn() {
             localStorage.setItem('jwt', JWT);  // Guardamos solo el JWT
             localStorage.setItem('usuario', JSON.stringify(usuarioData)); // Guardamos el resto de los datos
 
-            // Redirigir al perfil
-            navigate('/profile');
+            // Redirigir al dashboard
+            navigate('/dashboard/profile');
         } catch (err) {
             setError("Credenciales Incorrectas");
         }

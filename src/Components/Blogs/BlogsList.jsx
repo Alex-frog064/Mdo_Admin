@@ -1,134 +1,170 @@
-import React, { useState, useEffect } from "react";
-import { Pencil, Trash2, Search, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Search, Edit2, Trash2, Calendar } from "lucide-react";
 import axiosInstance from "../../../Conexion/AxiosInstance";
 import BlogsCreate from "./BlogsCreate";
 import BlogUpdate from "./BlogUpdate";
+import DeleteBlogModal from "./DeleteBlogModal";
 
-export default function BlogList() {
-  const [showModal, setShowModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [selectedBlog, setSelectedBlog] = useState(null);
+export default function BlogsList() {
   const [blogs, setBlogs] = useState([]);
-  const [nombre, setNombre] = useState("");
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedBlog, setSelectedBlog] = useState(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, blogId: null, blogTitle: "" });
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Obtener el ID del veterinario autenticado
-  const idVeterinario = 7967;
-
-  // Obtener todos los blogs del veterinario autenticado
   const fetchBlogs = async () => {
+    setLoading(true);
     try {
-      const response = await axiosInstance.get(`/blogs/veterinario/${idVeterinario}`);
+      const userData = JSON.parse(localStorage.getItem('usuario'));
+      const vetId = userData?.veterinario?.id;
+      
+      if (!vetId) {
+        console.error("No se encontró ID del veterinario");
+        return;
+      }
+
+      const response = await axiosInstance.get(`/blogs/veterinario/${vetId}`);
       setBlogs(response.data);
     } catch (error) {
       console.error("Error al obtener blogs:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (idVeterinario) {
+    fetchBlogs();
+  }, []);
+
+  const handleDelete = async () => {
+    try {
+      await axiosInstance.delete(`/blogs/${deleteModal.blogId}`);
       fetchBlogs();
-    }
-  }, [idVeterinario]);
-
-
-   const buscarBlog = async () => {
-    try {
-      const response = await fetch(
-        `https://api-mascoticobereal.onrender.com/blog/nombre?nombre=${nombre}`
-      );
-      if (!response.ok) {
-        throw new Error("No se pudo obtener el blog");
-      }
-      const data = await response.json();
-      setBlogs(data);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-      setBlogs([]);
-    }
-  };
-  
-  // Eliminar un blog por ID
-  const handleDelete = async (id) => {
-    try {
-      await axiosInstance.delete(`/blogs/${id}`);
-      setBlogs(blogs.filter((blog) => blog.id !== id));
+      setDeleteModal({ isOpen: false, blogId: null, blogTitle: "" });
     } catch (error) {
-      console.error("Error al eliminar el blog:", error);
+      console.error("Error al eliminar:", error);
     }
   };
 
-  const handleUpdateClick = (blog) => {
-    setSelectedBlog(blog);
-    setShowUpdateModal(true);
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue1"></div>
+      </div>
+    );
+  }
+
+  const filteredBlogs = blogs.filter(blog => 
+    blog.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    blog.categoria.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Mis Blogs</h2>
-        <div className="relative w-1/3">
+    <div className="p-8 bg-gray-50 min-h-screen">
+      {/* Header y búsqueda */}
+      <div className="max-w-7xl mx-auto mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Blog Posts</h1>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 bg-blue1 text-white px-6 py-3 rounded-xl
+                     hover:bg-blue2 transition-all duration-300 hover:shadow-lg"
+          >
+            <Plus size={20} />
+            Nuevo Post
+          </button>
+        </div>
+
+        <div className="relative">
           <input
             type="text"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Buscar..."
-            className="w-full p-3 pl-4 pr-10 rounded-full bg-gray-800 shadow-md text-black"
+            placeholder="Buscar blogs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full max-w-2xl px-5 py-3 rounded-xl bg-white border-0 focus:ring-2 focus:ring-blue1
+                     shadow-sm pl-12"
           />
-          <Search
-            className="absolute right-3 top-3 text-gray-500 cursor-pointer"
-            size={20}
-            onClick={buscarBlog }
-          />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-blue2 text-black rounded-full px-6 py-2 shadow-md hover:text-white hover:bg-blue1"
-        >
-          Crear blog
-        </button>
       </div>
 
-      {/* Lista de blogs */}
-      <div className="grid grid-cols-3 gap-6">
-        {blogs.length === 0 ? (
-          <p className="text-gray-500">No hay blogs disponibles.</p>
-        ) : (
-          blogs.map((blog) => (
-            <div key={blog.id} className="shadow-md rounded-lg overflow-hidden relative bg-white group">
-              <div className="relative">
-                <img src={blog.imagen} alt={blog.titulo} className="w-full h-48 object-cover" />
-                {/* Overlay con acciones */}
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity">
-                  <button
-                    onClick={() => handleUpdateClick(blog)}
-                    className="p-2 bg-white rounded-full hover:bg-sky-50 transition-colors"
-                  >
-                    <Pencil className="w-5 h-5 text-sky-500" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(blog.id)}
-                    className="p-2 bg-white rounded-full hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5 text-red-500" />
-                  </button>
-                </div>
-              </div>
-              <div className="p-4">
-                <span className="text-blue-500 text-sm font-medium">{blog.categoria}</span>
-                <h3 className="text-lg font-semibold mt-2">{blog.titulo}</h3>
-                <p className="text-sm text-gray-500 mt-2">
-                  ID: {blog.id_veterinario} • {blog.fecha_publicacion}
-                </p>
+      {/* Grid de blogs */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredBlogs.map((blog) => (
+          <div key={blog.id} className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+            {/* Imagen del blog */}
+            <div className="relative h-48 overflow-hidden">
+              <img
+                src={blog.imagen || "https://via.placeholder.com/400x200"}
+                alt={blog.titulo}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-4 right-4 flex gap-2">
+                <button
+                  onClick={() => {
+                    setSelectedBlog(blog);
+                    setShowUpdateModal(true);
+                  }}
+                  className="p-2 bg-white/90 rounded-full hover:bg-blue1 hover:text-white transition-colors"
+                >
+                  <Edit2 size={18} />
+                </button>
+                <button
+                  onClick={() => setDeleteModal({ 
+                    isOpen: true, 
+                    blogId: blog.id, 
+                    blogTitle: blog.titulo 
+                  })}
+                  className="p-2 bg-white/90 rounded-full hover:bg-red-500 hover:text-white transition-colors"
+                >
+                  <Trash2 size={18} />
+                </button>
               </div>
             </div>
-          ))
-        )}
+
+            {/* Contenido del blog */}
+            <div className="p-6">
+              <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                <Calendar size={16} />
+                <span>{new Date(blog.createdAt).toLocaleDateString()}</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">{blog.titulo}</h3>
+              <span className="inline-block px-3 py-1 bg-blue1/10 text-blue1 rounded-full text-sm">
+                {blog.categoria}
+              </span>
+              <p className="mt-4 text-gray-600 line-clamp-3">{blog.contenido}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {showModal && <BlogsCreate onClose={() => setShowModal(false)} />}
-      {showUpdateModal && <BlogUpdate blog={selectedBlog} onClose={() => setShowUpdateModal(false)} />}
+      {/* Modales */}
+      <BlogsCreate 
+        isOpen={showCreateModal} 
+        onClose={() => {
+          setShowCreateModal(false);
+          fetchBlogs();
+        }} 
+      />
+
+      <BlogUpdate 
+        isOpen={showUpdateModal}
+        onClose={() => {
+          setShowUpdateModal(false);
+          setSelectedBlog(null);
+          fetchBlogs();
+        }}
+        blogData={selectedBlog}
+      />
+
+      <DeleteBlogModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, blogId: null, blogTitle: "" })}
+        onConfirm={handleDelete}
+        blogTitle={deleteModal.blogTitle}
+      />
     </div>
   );
 }

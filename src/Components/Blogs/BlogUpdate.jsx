@@ -1,130 +1,171 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { X, Upload, Save, Image as ImageIcon } from "lucide-react";
+import axiosInstance from "../../../Conexion/AxiosInstance";
 
-export default function BlogUpdate({ blog, onClose }) {
-  const [title, setTitle] = useState(blog.title);
-  const [content, setContent] = useState(blog.content || "");
-  const [category, setCategory] = useState(blog.category);
-  const [image, setImage] = useState(blog.image);
-  
+export default function BlogUpdate({ isOpen, onClose, blogData }) {
+  const [blog, setBlog] = useState({
+    titulo: "",
+    categoria: "",
+    contenido: "",
+    imagen: null
+  });
+  const [loading, setLoading] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
+  useEffect(() => {
+    if (blogData) {
+      setBlog({
+        titulo: blogData.titulo,
+        categoria: blogData.categoria,
+        contenido: blogData.contenido,
+        imagen: blogData.imagen
+      });
+      setPreviewImage(blogData.imagen);
+    }
+  }, [blogData]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setBlog(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
     if (file) {
-      setImage(URL.createObjectURL(file));
+      setPreviewImage(URL.createObjectURL(file));
+      
+      const formData = new FormData();
+      formData.append("imagen", file);
+
+      try {
+        const response = await axiosInstance.post("/upload", formData);
+        setBlog(prev => ({ ...prev, imagen: response.data.url }));
+      } catch (error) {
+        console.error("Error al subir imagen:", error);
+      }
     }
   };
 
-  // Opciones de categoría
-  const categories = ["Cuidado", "Paseos", "Alimentación"];
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await axiosInstance.put(`/blogs/${blogData.id}`, blog);
+      if (response.status === 200) {
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error al actualizar:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-      <div className="relative w-[600px] bg-white rounded-lg overflow-hidden shadow-2xl">
-        {/* Botón de cerrar */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 bg-white rounded-full p-2 shadow-md z-50"
+    <div className="fixed inset-0 flex items-center justify-center z-[100]">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue1/20 to-blue2/20 backdrop-blur-[6px]"/>
+      
+      <div className="bg-white/90 rounded-3xl shadow-2xl max-w-4xl w-full mx-4 flex relative overflow-hidden">
+        <button 
+          onClick={onClose} 
+          className="absolute top-6 right-6 p-2 rounded-full hover:bg-black/5 transition-all duration-300 group z-10"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <X className="text-gray-400 group-hover:text-blue1" size={24} />
         </button>
 
-        {/* Imagen del blog */}
-        <div className="w-full h-64 bg-gray-200 overflow-hidden">
-          {image ? (
-            <img
-              src={image}
-              alt="Blog cover"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex justify-center items-center text-gray-500">
-              <span className="text-xl">📷</span>
-            </div>
-          )}
-        </div>
-
-        {/* Contenido del modal */}
-        <div className="p-6">
-          {/* Título del modal */}
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Actualizar Blog</h2>
-
-          {/* Input para el título */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Escribe el título"
-            />
-          </div>
-
-          {/* Textarea para el contenido */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows="4"
-              placeholder="Escribe el contenido"
-            />
-          </div>
-
-          {/* Menú desplegable para la categoría */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        {/* Contenedor izquierdo - Imagen */}
+        <div className="w-1/3 bg-gradient-to-br from-blue1/10 to-blue2/10 p-8 flex flex-col items-center justify-center">
+          <div className="w-full aspect-square rounded-2xl overflow-hidden bg-white/80 shadow-inner relative group">
+            <label 
+              htmlFor="blogImage" 
+              className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer transition-all duration-300"
             >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Input para subir imagen */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
-            <input
+              {previewImage ? (
+                <>
+                  <img 
+                    src={previewImage} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <ImageIcon size={40} className="text-white" />
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-blue1">
+                  <ImageIcon size={40} />
+                  <p className="text-sm">Actualizar imagen</p>
+                </div>
+              )}
+            </label>
+            <input 
               type="file"
+              id="blogImage"
               accept="image/*"
               onChange={handleImageUpload}
-              className="w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="hidden"
             />
           </div>
+        </div>
 
-          {/* Botón para guardar cambios */}
-          <div className="flex justify-end">
-            <button
-              onClick={() => {
-                // Aquí puedes agregar la lógica para guardar los cambios
-                console.log("Guardar cambios:", { title, content, category, image });
-                onClose(); // Cierra el modal después de guardar
-              }}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        {/* Contenedor derecho - Formulario */}
+        <div className="w-2/3 p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Actualizar Blog</h2>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <input
+              type="text"
+              name="titulo"
+              value={blog.titulo}
+              placeholder="Título del blog"
+              className="w-full p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0"
+              onChange={handleChange}
+              required
+            />
+
+            <select
+              name="categoria"
+              value={blog.categoria}
+              className="w-full p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0"
+              onChange={handleChange}
             >
-              Guardar cambios
+              <option value="Cuidado">Cuidado</option>
+              <option value="Alimentación">Alimentación</option>
+              <option value="Entrenamiento">Entrenamiento</option>
+              <option value="Salud">Salud</option>
+            </select>
+
+            <textarea
+              name="contenido"
+              value={blog.contenido}
+              placeholder="Contenido del blog..."
+              className="w-full p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0 h-40 resize-none"
+              onChange={handleChange}
+              required
+            />
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue1 to-blue2 text-white py-4 rounded-xl
+                       flex items-center justify-center gap-2 transition-all duration-300
+                       hover:shadow-lg hover:scale-[1.02] disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"/>
+                  <span>Actualizando...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={20} />
+                  <span>Guardar Cambios</span>
+                </>
+              )}
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { RouterProvider, createBrowserRouter, Navigate } from 'react-router-dom';
 import './index.css';
 import App from './App.jsx';
 import Dates from './Components/Dates/Dates.jsx';
@@ -10,22 +10,32 @@ import Profile from './Profile/Profile.jsx';
 import Blogs from './Components/Blogs/BlogsList.jsx';
 import ScheduleAppointments from './Components/Availability/Availability.jsx';
 import AddProductModal from './Components/Products/allProducts.jsx';
-
+import Sales from './Components/Sales/Sales.jsx';
 const router = createBrowserRouter([
   {
     path: "/",
+    element: <Navigate to="/SignIn" replace />,
+  },
+  {
+    path: "/SignIn",
+    element: <User/>
+  },
+  {
+    path: "/SignOn",
+    element: <Register/>
+  },
+  {
+    path: "/dashboard",
     element: <App />,
     children: [
-      { path: "/dates", element: <Dates/>},
-      { path:"/SignIn", element: <User/>},
-      {path:"/SignOn", element:<Register/>},
-      {path:"/profile", element: <Profile/>},
-      {path: "/blog", element: <Blogs/>},
-      {path: "/time", element: <ScheduleAppointments/>},
-      {path: "/inventory", element: <AddProductModal/>}
-     
+      { path: "/dashboard/dates", element: <Dates/>},
+      { path: "/dashboard/profile", element: <Profile/>},
+      { path: "/dashboard/blog", element: <Blogs/>},
+      { path: "/dashboard/time", element: <ScheduleAppointments/>},
+      { path: "/dashboard/inventory", element: <AddProductModal/>},
+      { path: "/dashboard/sales", element: <Sales/>}
     ],
-      },
+  },
 ]);
 
 createRoot(document.getElementById('root')).render(

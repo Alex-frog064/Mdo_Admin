@@ -16,7 +16,7 @@ import NavbarItem from "./Components/NavbarItem";
 
 export default function App() {
   const [isNavbarExpanded, setIsNavbarExpanded] = useState(true);
-  const isAuthenticated = !!localStorage.getItem("jwt"); // Verifica si el usuario está autenticado
+  const isAuthenticated = !!localStorage.getItem("jwt");
 
   if (!isAuthenticated) {
     return <Navigate to="/SignIn" replace />;
@@ -26,17 +26,16 @@ export default function App() {
     <main className="flex h-screen">
       {/* Barra lateral */}
       <Navbar isExpanded={isNavbarExpanded} setIsExpanded={setIsNavbarExpanded}>
-        <NavbarItem icon={<LayoutDashboard size={20} />} text="Blog" to="/blog" />
-        <NavbarItem icon={<Calendar size={20} />} text="Dates" to="/dates" />
-        <NavbarItem icon={<UserCircle size={20} />} text="User" to="/profile" />
-        <NavbarItem icon={<Clock size={20} />} text="Availability" to="/time" />
-        <NavbarItem icon={<BarChart3 size={20} />} text="Statistics" to="/statistics" />
-        <NavbarItem icon={<Boxes size={20} />} text="Inventory" to="/inventory" />
-        <NavbarItem icon={<Package size={20} />} text="Orders" to="/orders" />
+        <NavbarItem icon={<LayoutDashboard size={20} />} text="Blog" to="/dashboard/blog" />
+        <NavbarItem icon={<Calendar size={20} />} text="Dates" to="/dashboard/dates" />
+        <NavbarItem icon={<UserCircle size={20} />} text="User" to="/dashboard/profile" />
+        <NavbarItem icon={<Clock size={20} />} text="Availability" to="/dashboard/time" />
+        <NavbarItem icon={<BarChart3 size={20} />} text="Sales" to="/dashboard/sales" />
+        <NavbarItem icon={<Boxes size={20} />} text="Inventory" to="/dashboard/inventory" />
 
         <hr className="my-3" />
-        <NavbarItem icon={<Settings size={20} />} text="Settings" to="/settings" />
-        <NavbarItem icon={<LifeBuoy size={20} />} text="Help" to="/help" />
+        <NavbarItem icon={<Settings size={20} />} text="Settings" to="/dashboard/settings" />
+        <NavbarItem icon={<LifeBuoy size={20} />} text="Help" to="/dashboard/help" />
       </Navbar>
 
       {/* Contenido principal */}

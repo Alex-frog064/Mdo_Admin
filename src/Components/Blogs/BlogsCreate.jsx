@@ -1,67 +1,58 @@
 import { useState } from "react";
+import { X, Upload, Save, Image as ImageIcon } from "lucide-react";
 import axiosInstance from "../../../Conexion/AxiosInstance";
 import { useNavigate } from "react-router-dom"; // Para redirigir en caso de error
 
-export default function BlogsCreate({ onClose }) {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [category, setCategory] = useState("Cuidado"); // Valor inicial
-  const [image, setImage] = useState(null);
+export default function BlogsCreate({ isOpen, onClose }) {
+  const [blog, setBlog] = useState({
+    titulo: "",
+    categoria: "Cuidado",
+    contenido: "",
+    imagen: null
+  });
   const [loading, setLoading] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
   const navigate = useNavigate(); // Para redirigir en caso de error
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setBlog(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
     if (file) {
-      setImage(file); // Guarda el archivo de imagen
+      setPreviewImage(URL.createObjectURL(file));
+      setBlog(prev => ({ ...prev, imagen: file }));
     }
   };
 
-  // Opciones de categoría
-  const categories = ["Cuidado", "Paseos", "Alimentación"];
-
-  const handleCreateBlog = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
 
     // Obtener el id_veterinario desde el localStorage
-const idVeterinario = localStorage.getItem("usuario"); // Obtienes el id desde localStorage
-if (idVeterinario) {
-  const url = `/disponibilidad/veterinario/${idVeterinario}`; // Usas el id para formar la URL
-  try {
-    const response = await axiosInstance.get(url); // Realizas la petición GET
-    console.log(response.data); // Muestras la respuesta en la consola
-  } catch (error) {
-    console.error("Error en la consulta:", error); // Muestras el error si ocurre
-  }
-} else {
-  console.error("No se encontró el id del veterinario en el localStorage."); // Si no se encuentra el id
-}
-
-
-    // Crear un objeto FormData para enviar la imagen
-    const formData = new FormData();
-    formData.append("titulo", title);
-    formData.append("categoria", category);
-    formData.append("id_veterinario", id_veterinario);
-    formData.append("contenido", content);
-    if (image) {
-      formData.append("imagen", image); // Añade la imagen al FormData
+    const idVeterinario = localStorage.getItem("usuario"); // Obtienes el id desde localStorage
+    if (idVeterinario) {
+      const url = `/disponibilidad/veterinario/${idVeterinario}`; // Usas el id para formar la URL
+      try {
+        const response = await axiosInstance.get(url); // Realizas la petición GET
+        console.log(response.data); // Muestras la respuesta en la consola
+      } catch (error) {
+        console.error("Error en la consulta:", error); // Muestras el error si ocurre
+      }
+    } else {
+      console.error("No se encontró el id del veterinario en el localStorage."); // Si no se encuentra el id
     }
 
     try {
-      // Usar axiosInstance para enviar la solicitud
-      const response = await axiosInstance.post("/blogs", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data", // Especifica el tipo de contenido
-        },
+      const formData = new FormData();
+      Object.entries(blog).forEach(([key, value]) => {
+        formData.append(key, value);
       });
 
-      if (response.status === 201) { // 201 significa "Created"
-        alert("Blog creado exitosamente");
-        onClose(); // Cierra el modal después de crear
-      } else {
-        alert("Error al crear el blog");
-      }
+      await axiosInstance.post("/blogs", formData);
+      onClose();
     } catch (error) {
       console.error("Error:", error);
 
@@ -85,114 +76,104 @@ if (idVeterinario) {
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-      <div className="relative w-[500px] bg-white rounded-lg overflow-hidden shadow-2xl">
-        {/* Botón de cerrar */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 bg-white rounded-full p-2 shadow-md z-50"
+    <div className="fixed inset-0 flex items-center justify-center z-[100]">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue1/20 to-blue2/20 backdrop-blur-[6px]"/>
+      
+      <div className="bg-white/90 rounded-3xl shadow-2xl max-w-4xl w-full mx-4 flex relative overflow-hidden">
+        <button 
+          onClick={onClose} 
+          className="absolute top-6 right-6 p-2 rounded-full hover:bg-black/5 transition-all duration-300 group z-10"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <X className="text-gray-400 group-hover:text-blue1" size={24} />
         </button>
 
-        {/* Imagen del blog */}
-        <div className="w-full h-48 bg-gray-200 overflow-hidden relative">
-          {image ? (
-            <img
-              src={URL.createObjectURL(image)} // Muestra la imagen seleccionada
-              alt="Blog cover"
-              className="w-full h-full object-cover"
+        {/* Contenedor izquierdo - Imagen */}
+        <div className="w-1/3 bg-gradient-to-br from-blue1/10 to-blue2/10 p-8 flex flex-col items-center justify-center">
+          <div className="w-full aspect-square rounded-2xl overflow-hidden bg-white/80 shadow-inner relative">
+            <label 
+              htmlFor="blogImage" 
+              className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-black/5 transition-colors"
+            >
+              {previewImage ? (
+                <>
+                  <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <ImageIcon size={40} className="text-white" />
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-blue1">
+                  <ImageIcon size={40} />
+                  <p className="text-sm">Subir imagen</p>
+                </div>
+              )}
+            </label>
+            <input 
+              type="file"
+              id="blogImage"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
             />
-          ) : (
-            <div className="w-full h-full flex justify-center items-center text-gray-500 cursor-pointer">
-              {/* Input oculto para subir la imagen */}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="image-upload"
-              />
-              {/* Ícono que activa el input */}
-              <label
-                htmlFor="image-upload"
-                className="text-xl cursor-pointer"
-              >
-                📷
-              </label>
-            </div>
-          )}
+          </div>
         </div>
 
-        {/* Contenido del modal */}
-        <div className="p-6">
-          {/* Título del modal */}
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Crear Blog</h2>
-
-          {/* Input para el título */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+        {/* Contenedor derecho - Formulario */}
+        <div className="w-2/3 p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Crear Nuevo Blog</h2>
+          <form onSubmit={handleSubmit} className="space-y-6">
             <input
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Escribe el título"
+              name="titulo"
+              placeholder="Título del blog"
+              className="w-full p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0"
+              onChange={handleChange}
+              required
             />
-          </div>
 
-          {/* Textarea para el contenido */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows="4"
-              placeholder="Escribe el contenido"
-            />
-          </div>
-
-          {/* Menú desplegable para la categoría */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              name="categoria"
+              className="w-full p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0"
+              onChange={handleChange}
+              value={blog.categoria}
             >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
+              <option value="Cuidado">Cuidado</option>
+              <option value="Alimentación">Alimentación</option>
+              <option value="Entrenamiento">Entrenamiento</option>
+              <option value="Salud">Salud</option>
             </select>
-          </div>
 
-          {/* Botón para crear blog */}
-          <div className="flex justify-end">
+            <textarea
+              name="contenido"
+              placeholder="Contenido del blog..."
+              className="w-full p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0 h-40 resize-none"
+              onChange={handleChange}
+              required
+            />
+
             <button
-              onClick={handleCreateBlog}
+              type="submit"
               disabled={loading}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-300"
+              className="w-full bg-gradient-to-r from-blue1 to-blue2 text-white py-4 rounded-xl
+                       flex items-center justify-center gap-2 transition-all duration-300
+                       hover:shadow-lg hover:scale-[1.02] disabled:opacity-50"
             >
-              {loading ? "Creando..." : "Crear blog"}
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"/>
+                  <span>Creando...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={20} />
+                  <span>Crear Blog</span>
+                </>
+              )}
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>

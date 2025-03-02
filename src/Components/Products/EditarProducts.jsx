@@ -1,27 +1,29 @@
 import { useState, useEffect } from "react";
-import {ImageUp} from "lucide-react"
+import { ImageUp, X, Upload, Save } from "lucide-react";
+import axiosInstance from "../../../Conexion/AxiosInstance";
 
 export default function UpdateProduct({ isOpen, onClose, productData }) {
   const [product, setProduct] = useState({
-    name: "",
-    price: "",
+    nombre: "",
+    precio: "",
     stock: "",
-    brand: "",
-    petType: "",
-    age: "",
-    image: null,
+    marca: "",
+    mascota: "",
+    edad: "",
+    imagen: null,
   });
+  const [loading, setLoading] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.classList.add("overflow-hidden");
-      if (productData) {
-        setProduct(productData);
-      }
-    } else {
-      document.body.classList.remove("overflow-hidden");
+    if (isOpen && productData) {
+      setProduct({
+        ...productData,
+        precio: parseFloat(productData.precio).toString(),
+        stock: parseInt(productData.stock).toString(),
+      });
+      setPreviewImage(productData.imagen);
     }
-    return () => document.body.classList.remove("overflow-hidden");
   }, [isOpen, productData]);
 
   const handleChange = (e) => {
@@ -29,117 +31,183 @@ export default function UpdateProduct({ isOpen, onClose, productData }) {
     setProduct((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProduct((prev) => ({ ...prev, image: URL.createObjectURL(file) }));
+      setPreviewImage(URL.createObjectURL(file));
+      
+      // Crear FormData para la imagen
+      const formData = new FormData();
+      formData.append("imagen", file);
+
+      try {
+        const response = await axiosInstance.post("/upload", formData);
+        setProduct(prev => ({ ...prev, imagen: response.data.url }));
+      } catch (error) {
+        console.error("Error al subir imagen:", error);
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Producto actualizado:", product);
-    onClose();
+    setLoading(true);
+
+    try {
+      const response = await axiosInstance.put(`/productos/${productData.id}`, {
+        ...product,
+        precio: parseFloat(product.precio),
+        stock: parseInt(product.stock)
+      });
+
+      if (response.status === 200) {
+        onClose();
+        // Aquí podrías agregar una notificación de éxito
+      }
+    } catch (error) {
+      console.error("Error al actualizar:", error);
+      // Aquí podrías agregar una notificación de error
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black bg-opacity-50">
-      <div className="bg-white p-8 rounded-lg shadow-xl max-w-2xl w-full flex relative">
+    <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 flex relative overflow-hidden">
         {/* Botón de Cerrar */}
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-600 text-xl transition">✖</button>
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+        >
+          <X className="text-gray-500" size={20} />
+        </button>
 
         {/* Contenedor izquierdo - Imagen */}
-        <div className="w-1/3 bg-gray-200 flex items-center justify-center p-8 rounded-l-lg relative">
-          <label htmlFor="imageUpload" className="cursor-pointer">
-            {product.image ? (
-              <img src={product.image} alt="Producto" className="w-full h-full object-cover rounded" />
-            ) : (
-              <span className="text-gray-700 text-5xl"><ImageUp/></span>
-            )}
-          </label>
-          <input 
-            type="file" 
-            id="imageUpload" 
-            accept="image/*" 
-            className="hidden" 
-            onChange={handleImageChange} 
-          />
+        <div className="w-1/3 bg-gradient-to-br from-blue1/10 to-blue2/10 p-8 flex flex-col items-center justify-center">
+          <div className="w-full aspect-square rounded-2xl overflow-hidden bg-white shadow-inner relative">
+            <label 
+              htmlFor="imageUpload" 
+              className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-black/5 transition-colors"
+            >
+              {previewImage ? (
+                <img src={previewImage} alt="Producto" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-blue1">
+                  <Upload size={40} />
+                  <p className="text-sm">Subir imagen</p>
+                </div>
+              )}
+            </label>
+            <input 
+              type="file" 
+              id="imageUpload" 
+              accept="image/*" 
+              className="hidden" 
+              onChange={handleImageChange} 
+            />
+          </div>
         </div>
 
         {/* Contenedor derecho - Formulario */}
-        <div className="w-2/3 p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Actualizar Producto</h2>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <input
-              type="text"
-              name="name"
-              placeholder="Nombre del producto"
-              className="w-full p-2 bg-gray-100 rounded focus:ring-2 focus:ring-gray-400 shadow-md"
-              onChange={handleChange}
-              value={product.name}
-              required
-            />
-
-            <div className="flex items-center space-x-4">
-              <span className="font-semibold text-gray-700">$</span>
+        <div className="w-2/3 p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Actualizar Producto</h2>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
               <input
-                type="number"
-                name="price"
-                placeholder="Precio"
-                className="w-1/2 p-2 bg-gray-100 rounded focus:ring-2 focus:ring-gray-400 shadow-md"
+                type="text"
+                name="nombre"
+                placeholder="Nombre del producto"
+                className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue1 focus:border-transparent"
                 onChange={handleChange}
-                value={product.price}
+                value={product.nombre}
                 required
               />
-              <span className="ml-auto text-gray-700">Stock:</span>
+
+              <input
+                type="text"
+                name="marca"
+                placeholder="Marca"
+                className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue1 focus:border-transparent"
+                onChange={handleChange}
+                value={product.marca}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <input
+                  type="number"
+                  name="precio"
+                  placeholder="Precio"
+                  className="w-full p-3 pl-8 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue1 focus:border-transparent"
+                  onChange={handleChange}
+                  value={product.precio}
+                  required
+                />
+              </div>
+
               <input
                 type="number"
                 name="stock"
-                className="w-1/4 p-2 bg-stone-300 rounded focus:ring-2 focus:ring-gray-400 shadow-md"
+                placeholder="Stock disponible"
+                className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue1 focus:border-transparent"
                 onChange={handleChange}
                 value={product.stock}
                 required
               />
             </div>
 
-            <input
-              type="text"
-              name="brand"
-              placeholder="Marca"
-              className="w-full p-2 bg-gray-100 rounded focus:ring-2 focus:ring-gray-400 shadow-md"
-              onChange={handleChange}
-              value={product.brand}
-              required
-            />
-            <input
-              type="text"
-              name="petType"
-              placeholder="Mascota"
-              className="w-full p-2 bg-gray-100 rounded focus:ring-2 focus:ring-gray-400 shadow-md"
-              onChange={handleChange}
-              value={product.petType}
-              required
-            />
-            <select
-              name="age"
-              className="w-full p-2 rounded focus:ring-2 focus:ring-gray-400 shadow-md"
-              onChange={handleChange}
-              value={product.age}
-              required
-            >
-              <option value="">Seleccione la edad</option>
-              <option value="pequeños">Pequeños</option>
-              <option value="jovenes">Jóvenes</option>
-              <option value="adultos">Adultos</option>
-            </select>
+            <div className="grid grid-cols-2 gap-4">
+              <select
+                name="mascota"
+                className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue1 focus:border-transparent"
+                onChange={handleChange}
+                value={product.mascota}
+                required
+              >
+                <option value="">Tipo de mascota</option>
+                <option value="Perro">Perro</option>
+                <option value="Gato">Gato</option>
+                <option value="Ave">Ave</option>
+                <option value="Otros">Otros</option>
+              </select>
+
+              <select
+                name="edad"
+                className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue1 focus:border-transparent"
+                onChange={handleChange}
+                value={product.edad}
+                required
+              >
+                <option value="">Edad recomendada</option>
+                <option value="Cachorro">Cachorro</option>
+                <option value="Joven">Joven</option>
+                <option value="Adulto">Adulto</option>
+                <option value="Senior">Senior</option>
+              </select>
+            </div>
 
             <button
               type="submit"
-              className="w-full bg-blue1 hover:bg-teal-900 hover:text-black text-white py-2 rounded hover:bg-blue-600 transition"
+              disabled={loading}
+              className="w-full bg-blue1 hover:bg-blue2 text-white py-3 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
             >
-              Actualizar Producto
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Actualizando...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={20} />
+                  <span>Guardar Cambios</span>
+                </>
+              )}
             </button>
           </form>
         </div>
