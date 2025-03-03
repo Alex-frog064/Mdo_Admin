@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Link } from "react-router-dom"; // Asegúrate de importar Link
+import { Link } from "react-router-dom";
 import { SlidebarContext } from './Navbar';
 
 export default function NavbarItem({ icon, text, to, active, alert }) {
@@ -7,7 +7,7 @@ export default function NavbarItem({ icon, text, to, active, alert }) {
 
   return (
     <Link
-      to={to} // Ruta para la navegación
+      to={to}
       className={`
         relative flex items-center py-2 px-3 my-1 font-medium rounded-md cursor-pointer
         transition-colors group
@@ -18,15 +18,12 @@ export default function NavbarItem({ icon, text, to, active, alert }) {
         }
       `}
     >
-      {/* Ícono */}
       {icon}
 
-      {/* Texto (condicional según estado de `expanded`) */}
       <span className={`overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"}`}>
         {text}
       </span>
 
-      {/* Indicador de alerta */}
       {alert && (
         <div
           className={`absolute right-2 w-2 h-2 rounded bg-indigo-400 ${
@@ -35,12 +32,12 @@ export default function NavbarItem({ icon, text, to, active, alert }) {
         />
       )}
 
-      {/* Tooltip si el navbar no está expandido */}
       {!expanded && (
         <div 
           className={`
             absolute left-full rounded-md px-2 py-1 ml-6
-            invisible opacity-0 -translate-x-3 transition-all
+            bg-emerald-100 text-blue1
+            invisible opacity-20 -translate-x-3 transition-all
             group-hover:visible group-hover:opacity-100 group-hover:translate-x-0
           `}
         >

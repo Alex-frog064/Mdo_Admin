@@ -227,7 +227,7 @@ export default function TablaCitas() {
         <div className="overflow-hidden rounded-xl border border-sky-100 bg-white">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-sky-50 text-sky-900">
+              <tr className="bg-emerald-100 text-sky-900">
                 <th className="px-6 py-4 font-medium text-left">ID</th>
                 <th className="px-6 py-4 font-medium text-left">Fecha</th>
                 <th className="px-6 py-4 font-medium text-left">Hora</th>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaFacebook, FaLinkedinIn, FaGoogle, FaRegEnvelope } from 'react-icons/fa';
+import { FaFacebook, FaLinkedinIn, FaGoogle, FaRegEnvelope, FaRegImage } from 'react-icons/fa';
 import { MdLockOutline } from 'react-icons/md';
 import { NavLink } from 'react-router-dom';
 import axiosInstance from '../../Conexion/AxiosInstance';
@@ -20,11 +20,18 @@ export default function Register() {
     });
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setFormData((prevData) => ({
-            ...prevData,
-            [name]: type === 'checkbox' ? checked : value,
-        }));
+        const { name, value, type, checked, files } = e.target;
+        if (type === 'file') {
+            setFormData((prevData) => ({
+                ...prevData,
+                [name]: files[0]
+            }));
+        } else {
+            setFormData((prevData) => ({
+                ...prevData,
+                [name]: type === 'checkbox' ? checked : value,
+            }));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -76,7 +83,7 @@ export default function Register() {
                         <p className="text-gray-500 mb-4 text-sm md:text-base">Regístrate y comienza a gestionar tu clínica veterinaria de manera eficiente.</p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                            {["nombre", "apellido", "dni", "grado_estudio", "especialidad", "imagen_perfil"].map((field) => (
+                            {["nombre", "apellido", "dni", "grado_estudio", "especialidad"].map((field) => (
                                 <input
                                     key={field}
                                     type="text"
@@ -87,6 +94,23 @@ export default function Register() {
                                     className="bg-gray-100 p-3 rounded-lg outline-none text-sm w-full"
                                 />
                             ))}
+                            <div className="bg-gray-100 p-3 rounded-lg flex items-center">
+                                <FaRegImage className="text-gray-400 mr-2" />
+                                <input
+                                    type="file"
+                                    name="imagen_perfil"
+                                    accept="image/*"
+                                    onChange={handleChange}
+                                    className="hidden"
+                                    id="imagen_perfil"
+                                />
+                                <label 
+                                    htmlFor="imagen_perfil" 
+                                    className="text-gray-500 text-sm cursor-pointer w-full"
+                                >
+                                    {formData.imagen_perfil ? formData.imagen_perfil.name : "Insertar imagen de perfil"}
+                                </label>
+                            </div>
                         </div>
 
                         <div className="bg-gray-100 w-full p-3 flex items-center my-4 rounded-lg">

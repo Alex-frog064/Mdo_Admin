@@ -4,16 +4,7 @@ import axiosInstance from "../../../Conexion/AxiosInstance";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Definimos algunos colores consistentes
-const THEME = {
-  primary: '#6C5DD3',      // Morado principal
-  secondary: '#7FE7D9',    // Turquesa claro
-  background: '#F7F6FB',   // Gris muy claro/lila
-  card: '#FFFFFF',         // Blanco
-  text: {
-    primary: '#2B3674',    // Azul oscuro
-    secondary: '#A3AED0'   // Gris medio
-  }
-};
+
 
 export default function Sales() {
   const [ventas, setVentas] = useState([]);
@@ -130,12 +121,12 @@ export default function Sales() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-[#2B3674]">Análisis de Ventas</h1>
+            <h1 className="text-2xl font-bold text-[#2B7A77]">Análisis de Ventas</h1>
             <p className="text-[#A3AED0]">Información General</p>
           </div>
           <div className="flex gap-2">
-            <button className="px-4 py-1 rounded-full text-[#A3AED0]">Mes</button>
-            <button className="px-4 py-1 rounded-full bg-[#6C5DD3] text-white">Año</button>
+            <button className="px-4 py-1 rounded-full text-[#2B7A77]">Mes</button>
+            <button className="px-4 py-1 rounded-full bg-[#2B7A77] text-white">Año</button>
           </div>
         </div>
 
@@ -145,7 +136,7 @@ export default function Sales() {
             <div className="flex items-center gap-8">
               <div>
                 <p className="text-[#A3AED0] text-sm">Total Recaudado</p>
-                <h3 className="text-2xl font-bold text-[#6C5DD3]">
+                <h3 className="text-2xl font-bold text-[#2B7A77]">
                   ${metricas.ingresoTotal.toFixed(2)}
                 </h3>
               </div>
@@ -160,12 +151,12 @@ export default function Sales() {
                   dataKey="day" 
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#A3AED0', fontSize: 12 }}
+                  tick={{ fill: '#2B7A77', fontSize: 12 }}
                 />
                 <YAxis 
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#A3AED0', fontSize: 12 }}
+                  tick={{ fill: '#2B7A77', fontSize: 12 }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -177,7 +168,7 @@ export default function Sales() {
                 />
                 <Bar 
                   dataKey="sales" 
-                  fill="#6C5DD3"
+                  fill="#2B7A77"
                   radius={[20, 20, 0, 0]}
                   maxBarSize={40}
                 />
@@ -191,12 +182,12 @@ export default function Sales() {
           {statsCards.map((stat, index) => (
             <div key={index} className="bg-white rounded-2xl p-6 shadow-sm">
               <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-[#6C5DD3] bg-opacity-10 rounded-xl">
-                  <stat.icon size={24} className="text-[#6C5DD3]" />
+                <div className="p-3 bg-emerald-500 bg-opacity-10 rounded-xl">
+                  <stat.icon size={24} className="text-blue1" />
                 </div>
               </div>
-              <h3 className="text-[#A3AED0] text-sm mb-1">{stat.title}</h3>
-              <p className="text-2xl font-bold text-[#2B3674]">{stat.value}</p>
+              <h3 className="text-blue1 text-sm mb-1">{stat.title}</h3>
+              <p className="text-2xl font-bold text-blue2">{stat.value}</p>
             </div>
           ))}
         </div>

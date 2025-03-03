@@ -197,13 +197,13 @@ const Calendar = () => {
           <div className="flex justify-between mb-6">
             <button
               onClick={goToPreviousWeek}
-              className="px-4 py-2 bg-sky-200 text-sky-800 rounded-lg hover:bg-sky-300 transition-colors duration-200"
+              className="px-4 py-2 bg-emerald-200 text-blue1 rounded-lg hover:bg-blue2 transition-colors duration-200"
             >
               Semana anterior
             </button>
             <button
               onClick={goToNextWeek}
-              className="px-4 py-2 bg-sky-200 text-sky-800 rounded-lg hover:bg-sky-300 transition-colors duration-200"
+              className="px-4 py-2 bg-emerald-200 text-blue1 rounded-lg hover:bg-blue2 transition-colors duration-200"
             >
               Semana siguiente
             </button>
@@ -211,12 +211,12 @@ const Calendar = () => {
 
           {daysOfWeek.map((day) => (
             <div key={day.toString()} className="flex items-start mb-6 relative">
-              <div className="absolute -left-12 top-1/2 w-4 h-4 rounded-full bg-sky-300 -mt-2"></div>
+              <div className="absolute -left-12 top-1/2 w-4 h-4 rounded-full bg-emerald-300 -mt-2"></div>
               <div className="w-40 mr-8">
-                <h3 className="text-lg font-semibold text-sky-800">
+                <h3 className="text-lg font-semibold text-blue2">
                   {format(day, "EEEE", { locale: es })}
                 </h3>
-                <p className="text-sm text-sky-600">
+                <p className="text-sm text-blue2">
                   {format(day, "d MMMM", { locale: es })}
                 </p>
               </div>

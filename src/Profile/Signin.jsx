@@ -25,7 +25,7 @@ export default function SignIn() {
             localStorage.setItem('usuario', JSON.stringify(usuarioData)); // Guardamos el resto de los datos
 
             // Redirigir al dashboard
-            navigate('/dashboard/profile');
+            navigate('/dashboard/help');
         } catch (err) {
             setError("Credenciales Incorrectas");
         }
