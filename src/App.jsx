@@ -8,12 +8,12 @@ import {
   UserCircle,
   BarChart3,
   LayoutDashboard,
-  Settings,
+  Store,
   Clock,
   HelpCircle
 } from "lucide-react";
-import Navbar from "./Components/Navbar";
-import NavbarItem from "./Components/NavbarItem";
+import Navbar from "./Components/Navbar/Navbar";
+import NavbarItem from "./Components/Navbar/NavbarItem";
 import HelpModal from './Components/Help/HelpModal';
 
 export default function App() {
@@ -38,6 +38,8 @@ export default function App() {
 
           <hr className="my-3" />
           <NavbarItem icon={<LifeBuoy size={20} />} text="Help/Settings" to="/dashboard/help" />
+          
+          <NavbarItem icon={<Store size={20} />} text="Config store" to="/dashboard/datos" />
         </Navbar>
 
         {/* Contenido principal */}

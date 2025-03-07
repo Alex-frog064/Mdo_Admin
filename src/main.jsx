@@ -12,6 +12,7 @@ import ScheduleAppointments from './Components/Availability/Availability.jsx';
 import AddProductModal from './Components/Products/allProducts.jsx';
 import Sales from './Components/Sales/Sales.jsx';
 import Help from './Components/Help/Help.jsx';
+import Datos from './Components/Tienda/Datos.jsx';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -35,7 +36,8 @@ const router = createBrowserRouter([
       { path: "/dashboard/time", element: <ScheduleAppointments/>},
       { path: "/dashboard/inventory", element: <AddProductModal/>},
       { path: "/dashboard/sales", element: <Sales/>},
-      { path: "/dashboard/help", element: <Help/>}
+      { path: "/dashboard/help", element: <Help/>},
+      { path: "/dashboard/datos", element: <Datos/>}
     ],
   },
 ]);

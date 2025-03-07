@@ -4,7 +4,6 @@ import axiosInstance from "../../../Conexion/AxiosInstance";
 import AddProductModal from "./AddProducts";
 import UpdateProduct from "./EditarProducts";
 import DeleteConfirmModal from "./DeleteConfirmModal";
-
 export default function ProductCard() {
   const [showModal, setShowModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -16,8 +15,7 @@ export default function ProductCard() {
     productId: null,
     productName: ""
   });
-
-
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const fetchProductos = async () => {
     setLoading(true);
     try {
@@ -29,11 +27,13 @@ export default function ProductCard() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchProductos();
   }, []);
 
+  useEffect(() => {
+    console.log("Productos actuales:", productos);
+  }, [productos]);
 
   const handleDelete = async (id, nombre) => {
     setDeleteModal({
@@ -42,8 +42,6 @@ export default function ProductCard() {
       productName: nombre
     });
   };
-
-
   const confirmDelete = async () => {
     try {
       await axiosInstance.delete(`/productos/${deleteModal.productId}`);
@@ -53,8 +51,6 @@ export default function ProductCard() {
       console.error("Error al eliminar el producto:", error);
     }
   };
-
-
   const handleSearch = async () => {
     setLoading(true);
     if (!searchId) {
@@ -71,8 +67,15 @@ export default function ProductCard() {
       setLoading(false);
     }
   };
-
-  // Renderizar loading spinner
+  const getMascotaName = (mascotaId) => {
+    const mascotaTypes = {
+      "1": "Perro",
+      "3": "Gato",
+      "4": "Roedores",
+      "5": "Reptiles"
+    };
+    return mascotaTypes[mascotaId] || mascotaId;
+  };
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -80,7 +83,6 @@ export default function ProductCard() {
       </div>
     );
   }
-
   return (
     <div className="p-8 flex flex-col items-center bg-gray-50 min-h-screen">
       {/* Header y búsqueda */}
@@ -114,7 +116,6 @@ export default function ProductCard() {
           </button>
         </div>
       </div>
-
       {showModal && <AddProductModal isOpen={showModal} onClose={() => setShowModal(false)} />}
 
       {/* Grid de productos */}
@@ -138,8 +139,6 @@ export default function ProductCard() {
                     className="w-full h-full object-cover rounded-lg shadow-sm"
                   />
                 </div>
-
-                {/* Información del producto */}
                 <div className="flex-1">
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -153,21 +152,18 @@ export default function ProductCard() {
                       <Trash className="text-red-400 hover:text-red-600" size={20} />
                     </button>
                   </div>
-
-                  {/* Tags y detalles */}
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-2">
                       <span className="px-3 py-1 bg-blue-50 text-blue1 rounded-lg text-sm">
                         {producto.marca}
                       </span>
                       <span className="px-3 py-1 bg-blue-50 text-blue1 rounded-lg text-sm">
-                        Animal: {producto.mascota}
+                        {getMascotaName(producto.mascota)}
                       </span>
                       <span className="px-3 py-1 bg-blue-50 text-blue1 rounded-lg text-sm">
                         {producto.edad}
                       </span>
                     </div>
-                    
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-600">Stock:</span>
@@ -180,11 +176,14 @@ export default function ProductCard() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Botón de actualizar */}
                   <div className="mt-4 flex justify-end">
                     <button
-                      onClick={() => setShowUpdateModal(true)}
+                      onClick={() => {
+                        if (producto) {
+                          setSelectedProduct(producto);
+                          setShowUpdateModal(true);
+                        }
+                      }}
                       className="bg-blue2 hover:bg-blue1 px-6 py-2 rounded-lg text-white 
                                shadow-sm transition-all duration-200 transform hover:scale-105"
                     >
@@ -197,8 +196,17 @@ export default function ProductCard() {
           ))
         )}
       </div>
-
-      {/* Agregar el modal de confirmación */}
+      {showUpdateModal && selectedProduct && (
+        <UpdateProduct
+          isOpen={showUpdateModal}
+          onClose={() => {
+            setShowUpdateModal(false);
+            setSelectedProduct(null);
+          }}
+          productData={selectedProduct}
+          fetchProductos={fetchProductos}
+        />
+      )}
       <DeleteConfirmModal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, productId: null, productName: "" })}

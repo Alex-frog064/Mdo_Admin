@@ -9,11 +9,16 @@ export default function AddProductModal({ isOpen, onClose, fetchProductos }) {
     mascota: "",
     edad: "",
     precio: "",
+    categoria: "",
     stock: "",
+    peso: "",
+    id_veterinario: "",
     imagen: null,
   });
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -39,33 +44,110 @@ export default function AddProductModal({ isOpen, onClose, fetchProductos }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     setLoading(true);
+
     try {
-      const formData = new FormData();
-      formData.append("nombre", product.nombre);
-      formData.append("marca", product.marca);
-      formData.append("mascota", product.mascota);
-      formData.append("edad", product.edad);
-      formData.append("precio", product.precio);
-      formData.append("stock", product.stock);
-      if (product.imagen) {
-        formData.append("imagen", product.imagen);
+      const userData = JSON.parse(localStorage.getItem('usuario'));
+      const vetId = userData?.veterinario?.id;
+
+      if (!vetId) {
+        throw new Error('No se encontró el ID del veterinario');
       }
 
-      await axiosInstance.post("/productos", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const productData = {
+        nombre: product.nombre,
+        marca: product.marca,
+        mascota: product.mascota.toString(),
+        edad: "Adultos",
+        precio: product.precio.toString(),
+        stock: product.stock.toString(),
+        categoria: product.categoria.toString(),
+        peso: product.peso.toString(),
+        id_veterinario: vetId.toString()
+      };
+
+      const formData = new FormData();
+
+      Object.entries(productData).forEach(([key, value]) => {
+        formData.append(key, value);
       });
 
-      onClose();
-      if (fetchProductos) fetchProductos();
+      if (product.imagen) {
+        formData.append('imagen', product.imagen);
+      }
+
+      const response = await axiosInstance.post("/productos", formData, {
+        headers: { 
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        window.location.reload();
+      }
     } catch (error) {
-      console.error("Error al agregar producto:", error);
+      console.error("Error detallado:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      setIsSubmitting(false);
     } finally {
       setLoading(false);
     }
   };
 
+  // Validar campos antes de enviar
+  const validateForm = () => {
+    const requiredFields = [
+      'nombre',
+      'marca',
+      'mascota',
+      'edad',
+      'precio',
+      'stock',
+      'categoria',
+      'peso'
+    ];
+
+    const missingFields = requiredFields.filter(field => !product[field]);
+    if (missingFields.length > 0) {
+      alert(`Por favor complete los siguientes campos: ${missingFields.join(', ')}`);
+      return false;
+    }
+
+    return true;
+  };
+
+  // También necesitamos modificar el input del id_veterinario en el formulario
+  useEffect(() => {
+    // Establecer el id_veterinario cuando el componente se monta
+    const userData = JSON.parse(localStorage.getItem('usuario'));
+    const vetId = userData?.veterinario?.id;
+    if (vetId) {
+      setProduct(prev => ({
+        ...prev,
+        id_veterinario: vetId.toString()
+      }));
+    }
+  }, []);
+
   if (!isOpen) return null;
+
+  if (submitSuccess) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-[100]">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue1/20 to-blue2/20 backdrop-blur-[6px] animate-fade-in"/>
+        <div className="bg-white/90 rounded-3xl shadow-lg p-8 flex flex-col items-center justify-center animate-scale-up">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue1 mb-4"/>
+          <h3 className="text-xl font-semibold text-gray-800">¡Producto agregado con éxito!</h3>
+          <p className="text-gray-500 mt-2">Actualizando lista de productos...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[100]">
@@ -127,7 +209,12 @@ export default function AddProductModal({ isOpen, onClose, fetchProductos }) {
             <p className="text-gray-500">Completa los detalles del nuevo producto</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (validateForm()) {
+              handleSubmit(e);
+            }
+          }} className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <input
                 type="text"
@@ -178,10 +265,10 @@ export default function AddProductModal({ isOpen, onClose, fetchProductos }) {
                 required
               >
                 <option value="">Tipo de mascota</option>
-                <option value="Perro">Perro</option>
-                <option value="Gato">Gato</option>
-                <option value="Ave">Ave</option>
-                <option value="Otros">Otros</option>
+                <option value="1">Perro</option>
+                <option value="3">Gato</option>
+                <option value="4">Ave</option>
+                <option value="5">Otros</option>
               </select>
 
               <select
@@ -191,23 +278,51 @@ export default function AddProductModal({ isOpen, onClose, fetchProductos }) {
                 required
               >
                 <option value="">Edad recomendada</option>
+                <option value="Adultos">Adultos</option>
                 <option value="Cachorro">Cachorro</option>
                 <option value="Joven">Joven</option>
-                <option value="Adulto">Adulto</option>
                 <option value="Senior">Senior</option>
+                <option value="todas las edades">todas las edades</option>
               </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <select
+                name="categoria"
+                className="w-full p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0 transition-all duration-300 hover:bg-gray-50"
+                onChange={handleChange}
+                required
+              >
+                <option value="">Categoría del producto</option>
+                <option value="1">Alimento</option>
+                <option value="2">Juguetes</option>
+                <option value="3">Accesorios</option>
+                <option value="4">Higiene</option>
+                <option value="5">Salud</option>
+              </select>
+
+              <input
+                type="number"
+                name="peso"
+                placeholder="Peso del producto (kg)"
+                className="w-full p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0 transition-all duration-300 hover:bg-gray-50"
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isSubmitting}
               className="w-full bg-gradient-to-r from-blue1 to-blue2 text-white py-4 rounded-xl flex items-center justify-center gap-3 
                        transition-all duration-300 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
             >
-              {loading ? (
+              {loading || isSubmitting ? (
                 <>
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"/>
-                  <span className="font-medium">Procesando...</span>
+                  <span className="font-medium">
+                    {isSubmitting ? "Agregando producto..." : "Procesando..."}
+                  </span>
                 </>
               ) : (
                 <>

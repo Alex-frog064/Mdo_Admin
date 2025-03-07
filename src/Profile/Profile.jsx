@@ -117,10 +117,10 @@ const ProfileUpdate = () => {
     try {
       setLoading(true);
       const formData = new FormData();
-      formData.append('imagen', file);
+      formData.append('imagen_perfil', file);
 
       const vetId = getVetId();
-      const response = await axiosInstance.put(`/veterinario/${vetId}/imagen`, formData, {
+      const response = await axiosInstance.put(`/veterinario/${vetId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -128,14 +128,21 @@ const ProfileUpdate = () => {
 
       if (response.status === 200) {
         setSuccessMessage("Imagen actualizada correctamente");
-        // Actualizar datos en localStorage si es necesario
+        setFormData(prevData => ({
+          ...prevData,
+          imagen_perfil: response.data.imagen_perfil
+        }));
+        
+        // Actualizar datos en localStorage
         const userData = JSON.parse(localStorage.getItem('usuario'));
-        userData.veterinario.imagen = response.data.imagen;
-        localStorage.setItem('usuario', JSON.stringify(userData));
+        if (userData && userData.veterinario) {
+          userData.veterinario.imagen_perfil = response.data.imagen_perfil;
+          localStorage.setItem('usuario', JSON.stringify(userData));
+        }
       }
     } catch (error) {
       console.error("Error al actualizar la imagen:", error);
-      setError("Error al actualizar la imagen de perfil");
+      setError("Error al actualizar la imagen de perfil. Por favor, intenta de nuevo.");
     } finally {
       setLoading(false);
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -171,12 +178,15 @@ const ProfileUpdate = () => {
           <div className="relative group">
             <div className="w-32 h-32 bg-white rounded-full overflow-hidden shadow-lg mb-2">
               <img
-                src={formData.imagen || "../assets/fondo.png"}
-                alt="Profile"
+                src={formData.imagen_perfil || "/assets/default-profile.png"}
+                alt="Foto de perfil"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = "/assets/default-profile.png";
+                }}
               />
               <div
-                onClick={() => fileInputRef.current.click()}
+                onClick={handleImageClick}
                 className="absolute inset-0 bg-black/0 group-hover:bg-black/50 flex items-center justify-center 
                          transition-all duration-300 cursor-pointer"
               >
