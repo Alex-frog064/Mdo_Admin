@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import CreateDate from "./CreateDate";
 
 export default function TablaCitas() {
   const [busqueda, setBusqueda] = useState("");
@@ -11,6 +12,7 @@ export default function TablaCitas() {
   const [citasProximas, setCitasProximas] = useState([]);
   const [citasHistorial, setCitasHistorial] = useState([]);
   const [verHistorial, setVerHistorial] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -156,6 +158,12 @@ export default function TablaCitas() {
           </div>
           
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-4 py-2 bg-blue1 text-white rounded-xl hover:bg-blue2 transition-all duration-300"
+            >
+              Nueva Cita
+            </button>
             <button
               onClick={() => setVerHistorial(!verHistorial)}
               className={`px-4 py-2 rounded-xl transition-all duration-200
@@ -377,6 +385,18 @@ export default function TablaCitas() {
           </div>
         </div>
       )}
+
+      {/* Agregar el modal de CreateDate aquí */}
+      <CreateDate 
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onDateCreated={() => {
+          const fetchVeterinario = async () => {
+            // ... tu código existente de fetchVeterinario ...
+          };
+          fetchVeterinario();
+        }}
+      />
     </div>
   );
 }

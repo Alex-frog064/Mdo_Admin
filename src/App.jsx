@@ -16,6 +16,7 @@ import Navbar from "./Components/Navbar/Navbar";
 import NavbarItem from "./Components/Navbar/NavbarItem";
 import HelpModal from './Components/Help/HelpModal';
 
+
 export default function App() {
   const [isNavbarExpanded, setIsNavbarExpanded] = useState(true);
   const isAuthenticated = !!localStorage.getItem("jwt");
@@ -30,16 +31,20 @@ export default function App() {
       <main className="flex h-screen">
         {/* Barra lateral */}
         <Navbar isExpanded={isNavbarExpanded} setIsExpanded={setIsNavbarExpanded}>
+          {/* Menu oculto para opciones de home */}
           <NavbarItem icon={<LayoutDashboard size={20} />} text="Blog" to="/dashboard/blog" />
+         
           <NavbarItem icon={<Calendar size={20} />} text="Dates" to="/dashboard/dates" />
           <NavbarItem icon={<Clock size={20} />} text="Availability" to="/dashboard/time" />
+          {/* Menu oculto para opciones de home */}
           <NavbarItem icon={<BarChart3 size={20} />} text="Sales" to="/dashboard/sales" />
           <NavbarItem icon={<Boxes size={20} />} text="Inventory" to="/dashboard/inventory" />
 
           <hr className="my-3" />
           <NavbarItem icon={<LifeBuoy size={20} />} text="Help/Settings" to="/dashboard/help" />
-          
+          {/* Menu oculto para opciones de home
           <NavbarItem icon={<Store size={20} />} text="Config store" to="/dashboard/datos" />
+          */}
         </Navbar>
 
         {/* Contenido principal */}
