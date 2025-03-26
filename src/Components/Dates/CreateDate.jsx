@@ -1,30 +1,19 @@
 import { useState } from "react";
 import { X, Save, Calendar, Clock, User, PawPrint } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 export default function CreateDate({ isOpen, onClose, onDateCreated }) {
   const [formData, setFormData] = useState({
     fecha_cita: "",
     hora_cita: "",
     razon: "",
-    mascota: "1", // Valor por defecto: perro
-    nombreCliente: "",
+    mascota: "1",
     cliente: "",
-    estado: "pendiente"
+    nombreCliente: "" // Este no se enviará a la API
   });
 
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalInfo, setModalInfo] = useState({ type: "", message: "" });
-
-  const navigate = useNavigate();
-
-  const tiposMascota = [
-    { id: "1", nombre: "Perro" },
-    { id: "3", nombre: "Gato" },
-    { id: "4", nombre: "Reptil" },
-    { id: "5", nombre: "Otros" }
-  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -42,20 +31,17 @@ export default function CreateDate({ isOpen, onClose, onDateCreated }) {
       const usuarioData = JSON.parse(localStorage.getItem("usuario"));
       const token = localStorage.getItem("jwt");
 
+      // Crear el objeto exacto que espera la API
       const citaData = {
         id_veterinario: usuarioData?.veterinario?.id,
         fecha_cita: formData.fecha_cita,
-        hora_cita: formData.hora_cita,
+        hora_cita: formData.hora_cita + ":00", // Aseguramos el formato HH:mm:ss
         razon: formData.razon,
-        mascota: parseInt(formData.mascota),
-        cliente: parseInt(formData.cliente),
-        estado: "pendiente"
+        mascota: Number(formData.mascota), // Convertimos a número
+        cliente: Number(formData.cliente), // Convertimos a número
       };
 
-      // Guardar nombre del cliente en localStorage
-      const clientesGuardados = JSON.parse(localStorage.getItem("clientesCitas") || "{}");
-      clientesGuardados[citaData.cliente] = formData.nombreCliente;
-      localStorage.setItem("clientesCitas", JSON.stringify(clientesGuardados));
+      console.log("Datos a enviar:", citaData); // Para depuración
 
       const response = await fetch("https://api-mascoticobereal.onrender.com/citas", {
         method: "POST",
@@ -67,23 +53,33 @@ export default function CreateDate({ isOpen, onClose, onDateCreated }) {
       });
 
       if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al crear la cita');
       }
 
-      const data = await response.json();
-      
+      // Guardar nombre del cliente en localStorage
+      const clientesGuardados = JSON.parse(localStorage.getItem("clientesCitas") || "{}");
+      clientesGuardados[formData.cliente] = {
+        nombre: formData.nombreCliente,
+        tipo_mascota: formData.mascota
+      };
+      localStorage.setItem("clientesCitas", JSON.stringify(clientesGuardados));
+
       setModalInfo({ type: "success", message: "¡Cita creada exitosamente!" });
       setShowModal(true);
+      
+      // Esperar un momento antes de cerrar y actualizar
       setTimeout(() => {
-        setShowModal(false);
         onDateCreated();
         onClose();
-      }, 2000);
+        window.location.reload();
+      }, 1500);
+
     } catch (error) {
-      console.error("Error al crear la cita:", error);
+      console.error("Error detallado:", error);
       setModalInfo({
         type: "error",
-        message: "Error al crear la cita. Intenta de nuevo."
+        message: error.message || "Error al crear la cita. Intenta de nuevo."
       });
       setShowModal(true);
     } finally {
@@ -115,6 +111,7 @@ export default function CreateDate({ isOpen, onClose, onDateCreated }) {
                 <input
                   type="date"
                   name="fecha_cita"
+                  value={formData.fecha_cita}
                   className="w-full pl-12 p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0"
                   onChange={handleChange}
                   required
@@ -126,6 +123,7 @@ export default function CreateDate({ isOpen, onClose, onDateCreated }) {
                 <input
                   type="time"
                   name="hora_cita"
+                  value={formData.hora_cita}
                   className="w-full pl-12 p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0"
                   onChange={handleChange}
                   required
@@ -138,16 +136,15 @@ export default function CreateDate({ isOpen, onClose, onDateCreated }) {
                 <PawPrint className="absolute left-4 top-1/2 -translate-y-1/2 text-blue1" size={20} />
                 <select
                   name="mascota"
+                  value={formData.mascota}
                   className="w-full pl-12 p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0"
                   onChange={handleChange}
-                  value={formData.mascota}
                   required
                 >
-                  {tiposMascota.map(tipo => (
-                    <option key={tipo.id} value={tipo.id}>
-                      {tipo.nombre}
-                    </option>
-                  ))}
+                  <option value="1">Perro</option>
+                  <option value="3">Gato</option>
+                  <option value="4">Reptil</option>
+                  <option value="5">Otros</option>
                 </select>
               </div>
 
@@ -156,6 +153,7 @@ export default function CreateDate({ isOpen, onClose, onDateCreated }) {
                 <input
                   type="number"
                   name="cliente"
+                  value={formData.cliente}
                   placeholder="ID Cliente"
                   className="w-full pl-12 p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0"
                   onChange={handleChange}
@@ -169,6 +167,7 @@ export default function CreateDate({ isOpen, onClose, onDateCreated }) {
               <input
                 type="text"
                 name="nombreCliente"
+                value={formData.nombreCliente}
                 placeholder="Nombre del Cliente"
                 className="w-full pl-12 p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0"
                 onChange={handleChange}
@@ -178,6 +177,7 @@ export default function CreateDate({ isOpen, onClose, onDateCreated }) {
 
             <textarea
               name="razon"
+              value={formData.razon}
               placeholder="Razón de la cita..."
               className="w-full p-4 rounded-xl bg-gray-50/70 focus:ring-2 focus:ring-blue1 border-0 h-32 resize-none"
               onChange={handleChange}

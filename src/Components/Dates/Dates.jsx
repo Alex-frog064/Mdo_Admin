@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import CreateDate from "./CreateDate";
+import DateDetails from './DateDetails';
 
 export default function TablaCitas() {
   const [busqueda, setBusqueda] = useState("");
@@ -13,7 +14,15 @@ export default function TablaCitas() {
   const [citasHistorial, setCitasHistorial] = useState([]);
   const [verHistorial, setVerHistorial] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [detallesCita, setDetallesCita] = useState({ visible: false, cita: null });
   const navigate = useNavigate();
+
+  const tiposMascota = {
+    "1": "🐕 Perro",
+    "3": "🐱 Gato",
+    "4": "🦎 Reptil",
+    "5": "🧺 Basket"
+  };
 
   useEffect(() => {
     const fetchVeterinario = async () => {
@@ -258,7 +267,7 @@ export default function TablaCitas() {
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className="px-3 py-1 rounded-full bg-sky-100 text-sky-700">
-                      {cita.mascota}
+                      {tiposMascota[cita.mascota] || `ID: ${cita.mascota}`}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -279,7 +288,10 @@ export default function TablaCitas() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-3">
-                      <button className="px-3 py-1.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded-lg transition-colors duration-150">
+                      <button 
+                        onClick={() => setDetallesCita({ visible: true, cita: cita })}
+                        className="px-3 py-1.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded-lg transition-colors duration-150"
+                      >
                         Ver detalles
                       </button>
                       <button 
@@ -396,6 +408,12 @@ export default function TablaCitas() {
           };
           fetchVeterinario();
         }}
+      />
+
+      <DateDetails 
+        isOpen={detallesCita.visible}
+        onClose={() => setDetallesCita({ visible: false, cita: null })}
+        cita={detallesCita.cita}
       />
     </div>
   );

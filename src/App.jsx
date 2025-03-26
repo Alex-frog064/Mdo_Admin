@@ -36,8 +36,9 @@ export default function App() {
          
           <NavbarItem icon={<Calendar size={20} />} text="Dates" to="/dashboard/dates" />
           <NavbarItem icon={<Clock size={20} />} text="Availability" to="/dashboard/time" />
-          {/* Menu oculto para opciones de home */}
+          {/* Menu oculto para opciones de home 
           <NavbarItem icon={<BarChart3 size={20} />} text="Sales" to="/dashboard/sales" />
+          {/* Menu oculto para opciones de home */}
           <NavbarItem icon={<Boxes size={20} />} text="Inventory" to="/dashboard/inventory" />
 
           <hr className="my-3" />
