@@ -69,14 +69,15 @@ export default function TablaCitas() {
           return fechaCita < today;
         }).sort((a, b) => new Date(b.fecha_cita) - new Date(a.fecha_cita)); // Ordenar por fecha más reciente
 
-        // Obtener citas próximas (7 días)
+        // Obtener citas próximas (7 días), excluyendo las rechazadas
         const nextWeek = new Date();
         nextWeek.setDate(nextWeek.getDate() + 7);
         
         const proximasCitas = citasFuturas
           .filter(cita => {
             const fechaCita = new Date(cita.fecha_cita);
-            return fechaCita <= nextWeek;
+            // Filtrar por fecha Y que no estén rechazadas
+            return fechaCita <= nextWeek && cita.estado !== "rechazada";
           })
           .sort((a, b) => new Date(a.fecha_cita) - new Date(b.fecha_cita));
 
@@ -331,43 +332,47 @@ export default function TablaCitas() {
       {/* Panel derecho - Citas próximas */}
       {!verHistorial && (
         <div className="w-80 bg-white rounded-2xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-blue1 mb-4">Próximas Citas</h3>
+          <h3 className="text-lg font-semibold text-blue1 mb-4">
+            Próximas Citas
+            
+          </h3>
           <div className="space-y-4">
-            {citasProximas.length > 0 ? (
-              citasProximas.map((cita) => (
-                <div 
-                  key={cita.id}
-                  className="p-4 rounded-xl bg-gradient-to-r from-blue1/5 to-blue2/5 border border-blue1/10"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-medium text-blue1">
-                        {new Date(cita.fecha_cita).toLocaleDateString('es-ES', {
-                          weekday: 'long',
-                          day: 'numeric',
-                          month: 'long'
-                        })}
-                      </p>
-                      <p className="text-sm text-gray-600">{cita.hora_cita}</p>
-                    </div>
-                    <span className={`px-2 py-1 rounded-lg text-xs font-medium
-                      ${cita.estado === 'confirmada' ? 'bg-blue1/10 text-blue1' : 
-                        cita.estado === 'pendiente' ? 'bg-amber-50 text-amber-600' :
-                        'bg-red-50 text-red-600'}`}>
-                      {cita.estado}
-                    </span>
+            {citasProximas.slice(0, 7).map((cita) => (
+              <div 
+                key={cita.id}
+                onClick={() => setDetallesCita({ visible: true, cita: cita })}
+                className="p-4 rounded-xl bg-gradient-to-r from-blue1/5 to-blue2/5 border border-blue1/10
+                          hover:shadow-md hover:border-blue1/30 transition-all duration-300 cursor-pointer"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <p className="font-medium text-blue1">
+                      {new Date(cita.fecha_cita).toLocaleDateString('es-ES', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long'
+                      })}
+                    </p>
+                    <p className="text-sm text-gray-600">{cita.hora_cita}</p>
                   </div>
-                  <p className="text-sm text-gray-600 line-clamp-2">{cita.razon}</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="px-2 py-1 bg-blue1/5 rounded-lg text-xs text-blue1">
-                      ID Mascota: {cita.mascota}
-                    </span>
-                  </div>
+                  <span className={`px-2 py-1 rounded-lg text-xs font-medium
+                    ${cita.estado === 'confirmada' ? 'bg-blue1/10 text-blue1' : 
+                      cita.estado === 'pendiente' ? 'bg-amber-50 text-amber-600' :
+                      'bg-red-50 text-red-600'}`}>
+                    {cita.estado}
+                  </span>
                 </div>
-              ))
-            ) : (
+                <p className="text-sm text-gray-600 line-clamp-2">{cita.razon}</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="px-2 py-1 bg-blue1/5 rounded-lg text-xs text-blue1">
+                    {tiposMascota[cita.mascota] || "Otro"}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {citasProximas.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                <p>No hay citas próximas</p>
+                <p>No hay citas próximas confirmadas o pendientes</p>
               </div>
             )}
           </div>

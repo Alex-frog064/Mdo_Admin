@@ -7,7 +7,7 @@ export default function DateDetails({ isOpen, onClose, cita }) {
     "1": "🐕 Perro",
     "3": "🐱 Gato",
     "4": "🦎 Reptil",
-    "5": "🧺 Basket"
+    "5": "🧺 Otros"
   };
 
   // Formatear la fecha para mostrarla más amigable
@@ -70,8 +70,8 @@ export default function DateDetails({ isOpen, onClose, cita }) {
                 <div className="flex items-center gap-3 text-gray-600">
                   <PawPrint size={20} className="text-blue1" />
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Tipo de Mascota</p>
-                    <p className="text-gray-800">{tiposMascota[cita.mascota]}</p>
+                    <p className="text-sm font-medium text-gray-500">Mascota</p>
+                    <p className="text-gray-800">{tiposMascota[cita.mascota] || "Otro tipo"}</p>
                   </div>
                 </div>
 
