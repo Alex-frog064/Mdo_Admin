@@ -160,8 +160,8 @@ const Calendar = () => {
   }, [currentDate]); // Recargar disponibilidades cuando cambia la semana
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue1/5 to-blue2/5 p-6 sm:p-10">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue1/5 to-blue2/5 p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-10">
           <h1 className="text-4xl font-bold text-blue1 tracking-wide">
             Organizador Semanal
@@ -176,25 +176,25 @@ const Calendar = () => {
         </div>
 
         {loading && (
-          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue1"></div>
-              <p className="mt-4 text-gray-600">Cargando disponibilidades...</p>
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-3xl shadow-2xl">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue1 border-t-transparent"></div>
+              <p className="mt-4 text-gray-700 font-medium">Cargando disponibilidades...</p>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6">
-            {error}
+          <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-200 shadow-sm">
+            <p className="font-medium">{error}</p>
           </div>
         )}
 
         <div className="relative bg-white rounded-2xl p-8 shadow-lg">
-          <div className="absolute left-12 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue1/20 to-blue2/20"></div>
+          <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue1/20 to-blue2/20"></div>
 
-          {/* Botones de navegación entre semanas */}
-          <div className="flex justify-between mb-6">
+          {/* Botones de navegación */}
+          <div className="flex justify-between mb-6 pl-16">
             <button
               onClick={goToPreviousWeek}
               className="px-4 py-2 bg-emerald-200 text-blue1 rounded-lg hover:bg-blue2 transition-colors duration-200"
@@ -211,17 +211,19 @@ const Calendar = () => {
 
           {daysOfWeek.map((day) => (
             <div key={day.toString()} className="flex items-start mb-6 relative">
-              <div className="absolute -left-12 top-1/2 w-4 h-4 rounded-full bg-emerald-300 -mt-2"></div>
-              <div className="w-40 mr-8">
-                <h3 className="text-lg font-semibold text-blue2">
-                  {format(day, "EEEE", { locale: es })}
-                </h3>
-                <p className="text-sm text-blue2">
-                  {format(day, "d MMMM", { locale: es })}
-                </p>
+              <div className="absolute -left-2 top-1/2 w-4 h-4 rounded-full bg-emerald-300 -mt-2"></div>
+              <div className="w-40 pl-16 flex items-center">
+                <div>
+                  <h3 className="text-lg font-semibold text-blue2 capitalize">
+                    {format(day, "EEEE", { locale: es })}
+                  </h3>
+                  <p className="text-sm text-blue2">
+                    {format(day, "d MMMM", { locale: es })}
+                  </p>
+                </div>
               </div>
 
-              <div className="flex-1 bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex-1 bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 ml-6">
                 {editDay && isSameDay(editDay, day) ? (
                   <TimePicker
                     initialOpen={availability[format(day, "yyyy-MM-dd")]?.open || "09:00"}
